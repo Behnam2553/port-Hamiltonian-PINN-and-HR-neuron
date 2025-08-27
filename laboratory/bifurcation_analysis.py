@@ -70,11 +70,11 @@ def main():
     """
     # --- Simulation Parameters ---
     sim_params = DEFAULT_PARAMS.copy()
-    sim_params['k'] = 0.87
-    sim_params['m'] = 0.25
+    sim_params['rho'] = 0.7
+    sim_params['m'] = 1
     model_instance = HindmarshRose(N=1, params=sim_params, initial_state=DEFAULT_STATE0, I_ext=0.8, xi=0)
-    bifurcation_param_name = 'rho'
-    param_range = (0.3, 0.9, 400)  # Increased steps to show benefit of parallelization
+    bifurcation_param_name = 'k'
+    param_range = (-1.3, 0.6, 400)  # Increased steps to show benefit of parallelization
 
     # --- Integration Settings ---
     start_time = 0
