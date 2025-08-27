@@ -81,7 +81,7 @@ def main():
     end_time = 2000
     dt_initial = 0.05
     n_points = int(end_time / dt_initial)
-    transient_fraction = 0.75
+    transient_fraction = 0.5
     max_steps = int((end_time - start_time) / dt_initial) * 20
     solver = dfx.Tsit5()
     stepsize_controller = dfx.PIDController(rtol=1e-8, atol=1e-10)

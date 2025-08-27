@@ -4,16 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="329fa9e5-44a8-417a-9e59-78d39b36ad50" name="Changes" comment="initial commit">
-      <change afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/Thesis.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Thesis.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="329fa9e5-44a8-417a-9e59-78d39b36ad50" name="Changes" comment="directory path finding bug has been fixed.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/laboratory/bifurcation_analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/laboratory/bifurcation_analysis.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/laboratory/generate_data_for_PINN.py" beforeDir="false" afterPath="$PROJECT_DIR$/laboratory/generate_data_for_PINN.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/laboratory/v_dot_parameter_sweep_1D.py" beforeDir="false" afterPath="$PROJECT_DIR$/laboratory/v_dot_parameter_sweep_1D.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/laboratory/v_dot_parameter_sweep_2D.py" beforeDir="false" afterPath="$PROJECT_DIR$/laboratory/v_dot_parameter_sweep_2D.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -87,7 +80,7 @@
       <option name="presentableId" value="Default" />
       <updated>1756294356496</updated>
       <workItem from="1756294358043" duration="438000" />
-      <workItem from="1756298355195" duration="5657000" />
+      <workItem from="1756298355195" duration="7703000" />
     </task>
     <task id="LOCAL-00001" summary="initial commit">
       <option name="closed" value="true" />
@@ -97,7 +90,15 @@
       <option name="project" value="LOCAL" />
       <updated>1756294588675</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="directory path finding bug has been fixed.">
+      <option name="closed" value="true" />
+      <created>1756304374635</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1756304374635</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -116,10 +117,11 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="initial commit" />
-    <option name="LAST_COMMIT_MESSAGE" value="initial commit" />
+    <MESSAGE value="directory path finding bug has been fixed." />
+    <option name="LAST_COMMIT_MESSAGE" value="directory path finding bug has been fixed." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Thesis$bifurcation_analysis.coverage" NAME="bifurcation_analysis Coverage Results" MODIFIED="1756303829833" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/laboratory" />
-    <SUITE FILE_PATH="coverage/Thesis$plot_bif_lya.coverage" NAME="plot_bif_lya Coverage Results" MODIFIED="1756303701807" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/visualization/literature plots" />
+    <SUITE FILE_PATH="coverage/Thesis$bifurcation_analysis.coverage" NAME="bifurcation_analysis Coverage Results" MODIFIED="1756306032999" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/laboratory" />
+    <SUITE FILE_PATH="coverage/Thesis$plot_bif_lya.coverage" NAME="plot_bif_lya Coverage Results" MODIFIED="1756305923373" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/visualization/literature plots" />
   </component>
 </project>
