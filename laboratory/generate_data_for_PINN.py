@@ -131,7 +131,7 @@ if __name__ == '__main__':
     sim_params['ge'] = 0.65
 
     import os
-    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'PINN/')
+    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'PINN/')
     os.makedirs(output_dir, exist_ok=True)
 
     output_file = os.path.join(output_dir, f'error_system_data.png')

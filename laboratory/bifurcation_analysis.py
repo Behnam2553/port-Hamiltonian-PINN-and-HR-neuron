@@ -74,7 +74,7 @@ def main():
     sim_params['m'] = 0.25
     model_instance = HindmarshRose(N=1, params=sim_params, initial_state=DEFAULT_STATE0, I_ext=0.8, xi=0)
     bifurcation_param_name = 'rho'
-    param_range = (0.3, 0.9, 16)  # Increased steps to show benefit of parallelization
+    param_range = (0.3, 0.9, 400)  # Increased steps to show benefit of parallelization
 
     # --- Integration Settings ---
     start_time = 0
@@ -89,8 +89,8 @@ def main():
     # --- Parallel Execution ---
     param_start, param_end, param_steps = param_range
     bifurcation_values = np.linspace(param_start, param_end, int(param_steps))
-    # MAX_WORKERS = mp.cpu_count()
-    MAX_WORKERS = 8
+    MAX_WORKERS = mp.cpu_count()
+    # MAX_WORKERS = 8
 
     print(f"Starting parallel bifurcation analysis for '{bifurcation_param_name}'...")
     print(f"Running {param_steps} simulations on {MAX_WORKERS} cores.")
@@ -127,21 +127,20 @@ def main():
         all_peak_values.extend(peaks)
 
     # --- Plotting ---
-    from visualization.plotting import plot_bifurcation_diagram
+    # from visualization.plotting import plot_bifurcation_diagram
 
-    plot_bifurcation_diagram(
-        param_values=all_param_values,
-        peak_values=all_peak_values,
-        bifurcation_param_name=bifurcation_param_name,
-        title="Bifurcation Diagram",
-        ylabel=r'$x_{max}$',
-        s=2  # Marker size
-    )
+    # plot_bifurcation_diagram(
+    #     param_values=all_param_values,
+    #     peak_values=all_peak_values,
+    #     bifurcation_param_name=bifurcation_param_name,
+    #     title="Bifurcation Diagram",
+    #     ylabel=r'$x_{max}$',
+    #     s=2  # Marker size
+    # )
 
     # --- Optional: Save Data ---
     import os
-    # path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Bifurcation/')
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results/')
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'Bifurcation/')
     os.makedirs(path, exist_ok=True)
 
     gen_data = np.vstack([all_param_values, all_peak_values]).T

@@ -5,3 +5,4 @@ equinox
 optax
 matplotlib
 pandas
+PyQt5
