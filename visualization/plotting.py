@@ -2,8 +2,8 @@
 # Defines simulation parameters, runs the solver, and plots the results.
 
 import numpy as np
-import matplotlib
-matplotlib.use('Qt5Agg')
+# import matplotlib
+# matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 
@@ -23,7 +23,7 @@ def plot_all_time_series(results, N, title="Hindmarsh-Rose Neuron States"):
     # Create a figure with 5 rows (for states) and N columns (for neurons)
     # The squeeze=False argument ensures that 'axes' is always a 2D array,
     # even if N=1, which simplifies indexing.
-    fig, axes = plt.subplots(5, N, figsize=(4 * N, 10), sharex=True, squeeze=False)
+    fig, axes = plt.subplots(5, N, figsize=(4 * N, 10), sharex=True, squeeze=False, dpi=300)
     fig.suptitle(title, fontsize=16)
 
     for i, (state_var, state_label) in enumerate(zip(states, state_labels)):  # Loop over states (rows)

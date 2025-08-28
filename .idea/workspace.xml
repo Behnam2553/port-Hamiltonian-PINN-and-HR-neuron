@@ -4,13 +4,26 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="329fa9e5-44a8-417a-9e59-78d39b36ad50" name="Changes" comment="nothing important">
+    <list default="true" id="329fa9e5-44a8-417a-9e59-78d39b36ad50" name="Changes" comment="pinn codes added">
+      <change afterPath="$PROJECT_DIR$/src/sph_pinn/test_gpu.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project_map.txt" beforeDir="false" afterPath="$PROJECT_DIR$/project_map.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/hr_model/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/hr_model/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/sph_pinn/Combined_State_Hamil_JRH.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/src/sph_pinn/Combined_State_Hamil_JRH.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/visualization/plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/plotting.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -41,8 +54,12 @@
   "keyToString": {
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.bifurcation_analysis.executor": "Coverage",
+    "Python.bifurcation_analysis.executor": "Run",
+    "Python.extract_project.executor": "Run",
+    "Python.model.executor": "Run",
     "Python.plot_bif_lya.executor": "Run",
+    "Python.plotting.executor": "Run",
+    "Python.test_gpu.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
@@ -59,7 +76,7 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.lookFeel",
+    "settings.editor.selected.configurable": "ssh.settings",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -80,6 +97,11 @@
       <updated>1756294356496</updated>
       <workItem from="1756294358043" duration="438000" />
       <workItem from="1756298355195" duration="9589000" />
+      <workItem from="1756326486917" duration="6727000" />
+      <workItem from="1756374144312" duration="2927000" />
+      <workItem from="1756377800520" duration="2295000" />
+      <workItem from="1756385632252" duration="1610000" />
+      <workItem from="1756419527091" duration="1172000" />
     </task>
     <task id="LOCAL-00001" summary="initial commit">
       <option name="closed" value="true" />
@@ -105,7 +127,15 @@
       <option name="project" value="LOCAL" />
       <updated>1756321852230</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="pinn codes added">
+      <option name="closed" value="true" />
+      <created>1756334084895</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1756334084895</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -126,10 +156,15 @@
     <MESSAGE value="initial commit" />
     <MESSAGE value="directory path finding bug has been fixed." />
     <MESSAGE value="nothing important" />
-    <option name="LAST_COMMIT_MESSAGE" value="nothing important" />
+    <MESSAGE value="pinn codes added" />
+    <option name="LAST_COMMIT_MESSAGE" value="pinn codes added" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Thesis$bifurcation_analysis.coverage" NAME="bifurcation_analysis Coverage Results" MODIFIED="1756306032999" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/laboratory" />
-    <SUITE FILE_PATH="coverage/Thesis$plot_bif_lya.coverage" NAME="plot_bif_lya Coverage Results" MODIFIED="1756305923373" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/visualization/literature plots" />
+    <SUITE FILE_PATH="coverage/Thesis$model.coverage" NAME="model Coverage Results" MODIFIED="1756420080736" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/hr_model" />
+    <SUITE FILE_PATH="coverage/Thesis$bifurcation_analysis.coverage" NAME="bifurcation_analysis Coverage Results" MODIFIED="1756332418364" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/laboratory" />
+    <SUITE FILE_PATH="coverage/Thesis$plot_bif_lya.coverage" NAME="plot_bif_lya Coverage Results" MODIFIED="1756333113255" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/visualization/literature plots" />
+    <SUITE FILE_PATH="coverage/Thesis$test_gpu.coverage" NAME="test_gpu Coverage Results" MODIFIED="1756420671652" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/sph_pinn" />
+    <SUITE FILE_PATH="coverage/Thesis$extract_project.coverage" NAME="extract_project Coverage Results" MODIFIED="1756378484120" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/utils" />
+    <SUITE FILE_PATH="coverage/Thesis$plotting.coverage" NAME="plotting Coverage Results" MODIFIED="1756420073092" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/visualization" />
   </component>
 </project>

@@ -259,4 +259,4 @@ if __name__ == '__main__':
 
     results_coupled = hr_coupled.get_results_dict(transient_ratio)
 
-    plot_all_time_series(results_coupled, N=2, title="Two Coupled Neurons Simulation")
+    # plot_all_time_series(results_coupled, N=2, title="Two Coupled Neurons Simulation")

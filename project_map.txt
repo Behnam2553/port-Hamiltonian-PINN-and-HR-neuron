@@ -1,4 +1,4 @@
-# Project Directory Map: Code
+# Project Directory Map: Thesis
 
 
 ================================================================================
@@ -87,18 +87,18 @@ def main():
     """
     # --- Simulation Parameters ---
     sim_params = DEFAULT_PARAMS.copy()
-    sim_params['k'] = 0.87
-    sim_params['m'] = 0.25
+    sim_params['rho'] = 0.7
+    sim_params['m'] = 1
     model_instance = HindmarshRose(N=1, params=sim_params, initial_state=DEFAULT_STATE0, I_ext=0.8, xi=0)
-    bifurcation_param_name = 'rho'
-    param_range = (0.3, 0.9, 16)  # Increased steps to show benefit of parallelization
+    bifurcation_param_name = 'k'
+    param_range = (-1.3, 0.6, 400)  # Increased steps to show benefit of parallelization
 
     # --- Integration Settings ---
     start_time = 0
     end_time = 2000
     dt_initial = 0.05
     n_points = int(end_time / dt_initial)
-    transient_fraction = 0.75
+    transient_fraction = 0.5
     max_steps = int((end_time - start_time) / dt_initial) * 20
     solver = dfx.Tsit5()
     stepsize_controller = dfx.PIDController(rtol=1e-8, atol=1e-10)
@@ -106,8 +106,8 @@ def main():
     # --- Parallel Execution ---
     param_start, param_end, param_steps = param_range
     bifurcation_values = np.linspace(param_start, param_end, int(param_steps))
-    # MAX_WORKERS = mp.cpu_count()
-    MAX_WORKERS = 8
+    MAX_WORKERS = mp.cpu_count()
+    # MAX_WORKERS = 8
 
     print(f"Starting parallel bifurcation analysis for '{bifurcation_param_name}'...")
     print(f"Running {param_steps} simulations on {MAX_WORKERS} cores.")
@@ -144,21 +144,20 @@ def main():
         all_peak_values.extend(peaks)
 
     # --- Plotting ---
-    from visualization.plotting import plot_bifurcation_diagram
+    # from visualization.plotting import plot_bifurcation_diagram
 
-    plot_bifurcation_diagram(
-        param_values=all_param_values,
-        peak_values=all_peak_values,
-        bifurcation_param_name=bifurcation_param_name,
-        title="Bifurcation Diagram",
-        ylabel=r'$x_{max}$',
-        s=2  # Marker size
-    )
+    # plot_bifurcation_diagram(
+    #     param_values=all_param_values,
+    #     peak_values=all_peak_values,
+    #     bifurcation_param_name=bifurcation_param_name,
+    #     title="Bifurcation Diagram",
+    #     ylabel=r'$x_{max}$',
+    #     s=2  # Marker size
+    # )
 
     # --- Optional: Save Data ---
     import os
-    # path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Bifurcation/')
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results/')
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'Bifurcation/')
     os.makedirs(path, exist_ok=True)
 
     gen_data = np.vstack([all_param_values, all_peak_values]).T
@@ -311,7 +310,7 @@ if __name__ == '__main__':
     sim_params['ge'] = 0.65
 
     import os
-    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'PINN/')
+    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'PINN/')
     os.makedirs(output_dir, exist_ok=True)
 
     output_file = os.path.join(output_dir, f'error_system_data.png')
@@ -423,7 +422,7 @@ I_EXT = [0.8, 0.8]  # external currents
 XI = [[0, 1], [1, 0]]  # electrical coupling
 
 # where to save results (root directory)
-SAVE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'VDOT_1D/')
+SAVE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'VDOT_1D/')
 os.makedirs(SAVE_DIR, exist_ok=True)
 
 
@@ -648,7 +647,7 @@ I_EXT = [0.8, 0.8]  # external currents
 XI = [[0, 1], [1, 0]]  # electrical coupling
 
 # where to save results (root directory)
-SAVE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'VDOT_2D/')
+SAVE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'VDOT_2D/')
 os.makedirs(SAVE_DIR, exist_ok=True)
 
 # ───────────────────────────────────────────────────────────────────────
@@ -819,10 +818,6 @@ if __name__ == "__main__":
 ```
 
 ================================================================================
-## Folder: src
-------------------------------------------------------------
-
-================================================================================
 ## Folder: utils
 ------------------------------------------------------------
 
@@ -837,8 +832,8 @@ if __name__ == "__main__":
 # Defines simulation parameters, runs the solver, and plots the results.
 
 import numpy as np
-import matplotlib
-matplotlib.use('Qt5Agg')
+# import matplotlib
+# matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 
 
@@ -1141,6 +1136,825 @@ def plot_v_h_dot_2d(x_vals, y_vals, mean_dvdt, mean_dhdt, param_x_name, param_y_
         plt.close(fig_dh)
     else:
         plt.show(block=True)
+```
+
+================================================================================
+## Folder: src
+------------------------------------------------------------
+
+================================================================================
+## Folder: visualization/literature plots
+------------------------------------------------------------
+### Python Source Files:
+
+#### File: `plot_TS_PhP.py`
+```python
+import os
+import diffrax as dfx
+import matplotlib.pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
+from src.hr_model.model import HindmarshRose, DEFAULT_PARAMS, DEFAULT_STATE0
+
+
+# ==============================================================================
+# 1. LOCAL PLOTTING FUNCTIONS
+# ==============================================================================
+
+def plot_time_series(t, x, title_suffix, save_path_prefix=None):
+    """Plots the time series of variable x after a transient period."""
+
+    plt.figure(figsize=(8, 8), layout='tight')
+    plt.suptitle(f'{title_suffix}', fontsize=30, y=0.957)
+    plt.plot(t, x, c='k')
+    plt.xlabel(r'$t$', fontsize=25)
+    plt.ylabel(r'$x$', fontsize=25)
+    plt.tick_params(axis='both', which='major', labelsize=20)
+
+    if len(t) > 0:
+        t_min, t_max = t.min(), t.max()
+        plt.xlim([t_min, t_max + (t_max - t_min) * 0.01])
+
+    ax = plt.gca()
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+
+    if save_path_prefix:
+        plt.savefig(save_path_prefix + '.png', format='png', dpi=300)
+        plt.savefig(save_path_prefix + '.eps', format='eps')
+        plt.close()
+    else:
+        plt.show(block=True)
+
+
+def plot_phase_portrait(x, y, title_suffix, save_path_prefix=None):
+    """Plots the phase portrait (x vs y) after a transient period."""
+
+    plt.figure(figsize=(8, 8), layout='tight')
+    plt.suptitle(f'{title_suffix}', fontsize=30, y=0.957)
+    plt.plot(x, y, c='k')
+    plt.xlabel(r'$x$', fontsize=25)
+    plt.ylabel(r'$y$', fontsize=25)
+    plt.tick_params(axis='both', which='major', labelsize=20)
+    ax = plt.gca()
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    ax.xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+
+    if save_path_prefix:
+        plt.savefig(save_path_prefix + '.png', format='png', dpi=300)
+        plt.savefig(save_path_prefix + '.eps', format='eps')
+        plt.close()
+    else:
+        plt.show(block=True)
+
+
+# ==============================================================================
+# 2. MAIN SCRIPT LOGIC
+# ==============================================================================
+
+# --- Define the two specific simulation setups ---
+setups = [
+    {'name': 'rho_fixed', 'rho': 0.7, 'k': 0.36, 'm': 0.25},
+    {'name': 'rho_fixed', 'rho': 0.7, 'k': 0.36, 'm': 0.5},
+    {'name': 'rho_fixed', 'rho': 0.7, 'k': 0.36, 'm': 1},
+    {'name': 'k_fixed', 'rho': 0.7, 'k': 0.87, 'm': 0.25},
+    {'name': 'k_fixed', 'rho': 0.7, 'k': 0.87, 'm': 0.5},
+    {'name': 'k_fixed', 'rho': 0.7, 'k': 0.87, 'm': 1}
+]
+
+# --- Define Output Directory ---
+output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Phase Portrait')
+os.makedirs(output_dir, exist_ok=True)
+print(f"Plots will be saved to: {output_dir}")
+
+# --- Loop Through Setups and Run Simulations ---
+for setup_params in setups:
+    m_val = setup_params['m']
+    setup_name = setup_params['name']
+    print(f"\n--- Running simulation for setup: '{setup_name}' (m = {m_val}) ---")
+
+    # --- Use simulation example from model.py ---
+    sim_params = DEFAULT_PARAMS.copy()
+    sim_params.update(setup_params)  # Update params for the current setup
+
+    # Create the model instance
+    hr_model = HindmarshRose(N=1, params=sim_params, initial_state=DEFAULT_STATE0, I_ext=0.8, xi=0)
+
+    # Integration settings
+    start_time = 0
+    end_time = 2000
+    dt_initial = 0.05
+    n_points = 20000
+    max_steps = int((end_time - start_time) / dt_initial) * 20
+    solver = dfx.Tsit5()
+    stepsize_controller = dfx.PIDController(rtol=1e-8, atol=1e-10)
+
+    # Run the solver
+    hr_model.solve(
+        solver=solver, t0=start_time, t1=end_time, dt0=dt_initial, n_points=n_points,
+        stepsize_controller=stepsize_controller, max_steps=max_steps)
+
+    # Get results, discarding the first 75% as transient
+    transient_discard_ratio = 0.75
+    results = hr_model.get_results_dict(transient_ratio=transient_discard_ratio)
+    t_sol, x_sol, y_sol = results['t'], results['x1'], results['y1']
+
+    # --- Use exact plotting logic from the original script ---
+    if m_val == 1:
+        xt_title_suffix, xy_title_suffix = '(a1)', '(a2)'
+    elif m_val == 0.5:
+        xt_title_suffix, xy_title_suffix = '(b1)', '(b2)'
+    elif m_val == 0.25:
+        xt_title_suffix, xy_title_suffix = '(c1)', '(c2)'
+    else:
+        xt_title_suffix, xy_title_suffix = '(x1)', '(x2)'
+
+    # --- Create filenames and save plots ---
+    base_filename_ts = f"timeseries_{setup_name}_{xt_title_suffix.strip('()')}"
+    save_path_prefix_ts = os.path.join(output_dir, base_filename_ts)
+
+    base_filename_pp = f"phase_portrait_{setup_name}_{xy_title_suffix.strip('()')}"
+    save_path_prefix_pp = os.path.join(output_dir, base_filename_pp)
+
+    # Plot and save the time series using the local function
+    plot_time_series(t_sol, x_sol, xt_title_suffix, save_path_prefix=save_path_prefix_ts)
+
+    # Plot and save the phase portrait using the local function
+    plot_phase_portrait(x_sol, y_sol, xy_title_suffix, save_path_prefix=save_path_prefix_pp)
+
+print("\nAll simulations and plots saved successfully.")
+```
+
+#### File: `plot_bif_lya.py`
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+from matplotlib.ticker import FuncFormatter
+import os # Add this import
+
+
+
+# --- Define paths to the data directories relative to the data ---
+path_bif = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Bifurcation/')
+os.makedirs(path_bif, exist_ok=True)
+
+path_lya = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Lyapanov 1D/')
+os.makedirs(path_lya, exist_ok=True)
+
+# --- Define output directory ---
+output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Bif_Lya_plots')
+os.makedirs(output_dir, exist_ok=True)
+
+
+
+bif_names = ['Bif_k_rho_0.7_m_1.npy', 'Bif_k_rho_0.7_m_0.5.npy', 'Bif_k_rho_0.7_m_0.25.npy',
+             'Bif_rho_k_0.87_m_1.npy', 'Bif_rho_k_0.87_m_0.5.npy', 'Bif_rho_k_0.87_m_0.25.npy']
+lya_names = ['Lya_k_rho_0.7_m_1.txt', 'Lya_k_rho_0.7_m_0.5.txt', 'Lya_k_rho_0.7_m_0.25.txt',
+             'Lya_rho_k_0.87_m_1.txt', 'Lya_rho_k_0.87_m_0.5.txt', 'Lya_rho_k_0.87_m_0.25.txt']
+save_names = ['k_m_1', 'k_m_0.5', 'k_m_0.25',
+              'rho_m_1', 'rho_m_0.5', 'rho_m_0.25']
+x_names = [r'$k$', r'$k$', r'$k$', r'$\rho$', r'$\rho$', r'$\rho$']
+titles = ['(a)', '(b)', '(c)', '(a)', '(b)', '(c)']
+
+leg_poss = [(0, 0), (0, 0), (0, 0), (0, 0), (0.75, 0), (0, 0)]
+
+for bif_name, lya_name, save_name, title, leg_pos, x_name in zip(
+        bif_names, lya_names, save_names, titles, leg_poss, x_names):
+
+    # Load data
+    data_lya = np.array(pd.read_csv(path_lya+lya_name, delim_whitespace=True, header=None))
+    data_bif = np.load(path_bif+bif_name)
+
+
+    # Function to format ticks to 2 decimal places
+    def format_func(value, tick_number):
+        return f'{value:.2f}'
+
+
+    # Define the size of each subplot (square dimensions)
+    subplot_size = 6  # in inches
+
+    # Calculate the total figure size
+    total_width = subplot_size
+    total_height = 1.25 * subplot_size
+
+    # Create the figure and subplots with adjusted size and spacing
+    fig, (ax1, ax2) = plt.subplots(
+        2, 1,
+        figsize=(total_width, total_height),
+        gridspec_kw={'height_ratios': [1, 1]}
+    )
+    fig.suptitle(title, fontsize=30, y=0.95)
+
+    ### Subplot 1: Scatter Plot
+    # Plot the data
+    ax1.scatter(data_bif[:, 0], data_bif[:, 1], s=0.05, c='k')
+
+    # Set labels and format
+    ax1.set_ylabel(r'$x_{\text{max}}$', fontsize=25)
+    ax1.set_xticks([])
+    ax1.tick_params(axis='both', which='major', labelsize=16)
+    ax1.set_xlim([data_bif[:, 0].min(), data_bif[:, 0].max()])
+    ax1.xaxis.set_major_formatter(FuncFormatter(format_func))
+    ax1.yaxis.set_major_formatter(FuncFormatter(format_func))
+
+    # Set y-limits to data range
+    y_min_ax1 = data_bif[:, 1].min()
+    y_max_ax1 = data_bif[:, 1].max()
+    ax1.set_ylim([y_min_ax1, y_max_ax1])
+
+    # Set y-ticks
+    ax1.set_yticks(np.linspace(y_min_ax1, y_max_ax1, 5))
+
+    # Adjust aspect ratio
+    ax1.set_aspect('auto')
+
+    ### Subplot 2: Line Plot
+    # Plot the data
+    ax2.plot(data_lya[:, 0], data_lya[:, 1], label="LE 1", linewidth=1.5, c='b')
+    ax2.plot(data_lya[:, 0], data_lya[:, 3], label="LE 2", linewidth=1.5, c='r')
+
+    # Set labels and format
+
+    ax2.set_xlabel(x_name, fontsize=25)
+    ax2.set_ylabel(r'$LEs$', fontsize=25)
+    ax2.tick_params(axis='both', which='major', labelsize=16)
+    ax2.set_xlim([data_lya[:, 0].min(), data_lya[:, 0].max()])
+    ax2.set_xticks(np.linspace(data_lya[:, 0].min(), data_lya[:, 0].max(), 5))
+    ax2.xaxis.set_major_formatter(FuncFormatter(format_func))
+    ax2.yaxis.set_major_formatter(FuncFormatter(format_func))
+    ax2.legend(fontsize=12, loc='lower left', bbox_to_anchor=leg_pos)
+    ax2.grid(True)
+
+    # Set y-limits to data range
+
+    y_min_ax2 = min(data_lya[:, 1][~np.isnan(data_lya[:, 1])].min(),
+                    data_lya[:, 3][~np.isnan(data_lya[:, 3])].min())
+    y_max_ax2 = max(data_lya[:, 1][~np.isnan(data_lya[:, 1])].max(),
+                    data_lya[:, 3][~np.isnan(data_lya[:, 3])].max())
+    ax2.set_ylim([y_min_ax2, y_max_ax2])
+
+    # Set y-ticks
+    ax2.set_yticks(np.linspace(y_min_ax2, y_max_ax2, 5))
+
+    # Adjust aspect ratio
+    ax2.set_aspect('auto')
+
+    # **Adjust layout to prevent labels from being cut off**
+    plt.tight_layout()
+
+    # If labels are still cut off, adjust the margins manually
+    # fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.1, hspace=0.3)
+
+    # --- Save the figure in both PNG and EPS formats ---
+    base_output_path = os.path.join(output_dir, save_name)
+    plt.savefig(base_output_path + '.png', format='png', dpi=100)
+    plt.savefig(base_output_path + '.eps', format='eps')
+    plt.close()
+```
+
+#### File: `plot_error_system.py`
+```python
+import os
+import matplotlib
+matplotlib.use('Qt5Agg')
+import matplotlib.pyplot as plt
+import diffrax as dfx
+import jax.numpy as jnp
+from src.hr_model.error_system import HRNetworkErrorSystem
+from src.hr_model.model import DEFAULT_PARAMS
+
+# ======================================================================
+# 1. SIMULATION SETUP & EXECUTION
+# ======================================================================
+
+# --- Initial Conditions & Parameters ---
+# Initial state (x, y, z, u, φ for each neuron)
+INITIAL_HR_STATE0 = [
+    0.1, 0.2, 0.3, 0.4, 0.1,   # neuron 1
+    0.2, 0.3, 0.4, 0.5, 0.2    # neuron 2
+]
+
+# [cite_start]External currents and coupling matrix [cite: 151]
+I_ext = [0.8, 0.8]
+xi = [[0, 1], [1, 0]]
+sim_params = DEFAULT_PARAMS.copy()
+
+# --- Create Simulator Instance ---
+# Using 'complete' dynamics as in the example
+simulator = HRNetworkErrorSystem(params=sim_params, dynamics='complete',
+                                 hr_initial_state=INITIAL_HR_STATE0, I_ext=I_ext, hr_xi=xi)
+
+# --- Integration Settings ---
+start_time = 0
+end_time = 1000
+dt_initial = 0.01
+point_num = 10000
+transient_ratio = 0
+n_points = dfx.SaveAt(ts=jnp.linspace(start_time, end_time, point_num), dense=True)
+max_steps = int((end_time - start_time) / dt_initial) * 20
+solver = dfx.Tsit5()
+stepsize_controller = dfx.PIDController(rtol=1e-10, atol=1e-12)
+
+# --- Run Simulation ---
+print("Running simulation...")
+simulator.solve(
+    solver=solver,
+    t0=start_time,
+    t1=end_time,
+    dt0=dt_initial,
+    n_points=n_points,
+    stepsize_controller=stepsize_controller,
+    max_steps=max_steps
+)
+print("Simulation finished.")
+
+# --- Get Results ---
+results = simulator.get_results_dict(transient_ratio)
+
+
+# ======================================================================
+# 2. PLOTTING
+# This section is preserved from the original plot_error_system.py
+# ======================================================================
+
+# --- Define the Directory ---
+output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Error System')
+os.makedirs(output_dir, exist_ok=True)
+print(f"Saving figures to '{output_dir}/'")
+
+# --- Define Plotting Series ---
+series = [
+    ('e_x', r'$e_x$', 'darkblue', '(a)'),
+    ('e_y', r'$e_y$', 'C2', '(b)'),
+    ('e_z', r'$e_z$', 'C1', '(c)'),
+    ('e_u', r'$e_u$', 'tomato', '(d)'),
+    ('e_phi', r'$e_\phi$', 'purple', '(e)'),
+]
+
+# --- Generate and Save Plots ---
+for key, label, color, title in series:
+    # Create a new square figure with high resolution and tight layout
+    fig, ax = plt.subplots(
+        figsize=(4, 4),
+        dpi=200,
+        constrained_layout=True)
+
+    # Plot the data
+    ax.plot(results['t'], results[key], c=color, linewidth=1.5)
+
+    # Set labels, title, grid, aspect ratio, and margins
+    ax.set_xlabel(r'$t$',   fontsize=18)
+    ax.set_ylabel(label,    fontsize=18)
+    ax.set_title(f'{title.strip("$")}', fontsize=20)
+    ax.grid(True)
+    ax.set_box_aspect(1.0)
+    ax.margins(x=0)
+
+    # Define save paths and save the figure in both PNG and EPS formats
+    png_path = os.path.join(output_dir, f'{key}.png')
+    eps_path = os.path.join(output_dir, f'{key}.eps')
+    fig.savefig(png_path, format='png', dpi=200)
+    fig.savefig(eps_path, format='eps')
+
+    plt.close(fig)
+
+print("All plots have been generated and saved successfully.")
+```
+
+#### File: `plot_lya2D_heatmap.py`
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import matplotlib.colors as mcolors
+import os
+
+
+
+
+
+# --- Define the Directory ---
+path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Lyapanov 2D/')
+os.makedirs(path, exist_ok=True)
+
+file_names = ['Max_Lya_k_m.txt', 'Max_Lya_rho_m.txt', 'Max_Lya_rho_k_m_1.txt',
+              'Max_Lya_rho_k_m_0.5.txt', 'Max_Lya_rho_k_m_0.25.txt']
+
+save_names = ['K_M', 'Rho_M', 'Rho_K0_M_1',
+              'Rho_K0_M_0.5', 'Rho_K0_M_0.25']
+
+x_names = [r'$k$', r'$\rho$', r'$\rho$', r'$\rho$', r'$\rho$']
+y_names = [r'$m$', r'$m$', r'$k$', r'$k$', r'$k$']
+titles = ['(a)', '(b)', '(c1)', '(c2)', '(c3)']
+
+global_min = float('inf')
+global_max = float('-inf')
+
+# First pass: Determine global min and max across all files
+for file_name in file_names:
+    df = pd.read_csv(path + file_name, delim_whitespace=True, header=None)
+    pivot_table = df.pivot(index=0, columns=2, values=1).fillna(0)
+    array_2d = np.rot90(pivot_table.to_numpy(), k=1)
+    global_min = min(global_min, np.nanmin(array_2d))
+    global_max = max(global_max, np.nanmax(array_2d))
+
+# Iterate through files again to create plots with consistent colorbar
+for file_name, save_name, x_name, y_name, title in zip(
+        file_names, save_names, x_names, y_names, titles):
+
+    # Read the file into a DataFrame
+    df = pd.read_csv(path + file_name, delim_whitespace=True, header=None)
+
+    # Pivot the DataFrame to reshape it into a 2D array
+    pivot_table = df.pivot(index=0, columns=2, values=1)
+
+    # Fill NaNs with a value if necessary, h.g., 0
+    pivot_table = pivot_table.fillna(0)
+
+    # Convert to a 2D numpy array
+    array_2d = np.rot90(pivot_table.to_numpy(), k=1)
+
+    # Define custom colormap: black to yellow to red
+    colors = ['black', 'yellow', 'red']
+    n_bins = int((global_max * 100 / (
+                global_max - global_min)) * 128) if global_min != global_max else 256  # Handle case where min == max
+    cmap_custom = mcolors.LinearSegmentedColormap.from_list("custom", colors, N=n_bins)
+
+    # Combine white for negative values with the custom colormap
+    if global_min < 0:
+        cmap_pos = cmap_custom(np.linspace(0, 1, n_bins))
+        cmap_min_len = int(
+            (abs(global_min) * 100 / (global_max - global_min)) * 128) if global_min != global_max else 128
+        cmap_min = np.array([[1, 1, 1, 1]] * cmap_min_len)
+        cmap_combined = np.vstack((cmap_min, cmap_custom(np.linspace(0, 1, n_bins))))
+        cmap = mcolors.ListedColormap(cmap_combined)
+        vmin_plot = global_min
+        vmax_plot = global_max
+    else:
+        cmap = cmap_custom
+        vmin_plot = global_min
+        vmax_plot = global_max
+
+    # Plot the heatmap
+    fig, ax = plt.subplots(figsize=(8, 8), dpi=1000)
+    plt.suptitle(title, fontsize=30, y=0.90)
+    img = ax.imshow(array_2d, aspect='auto', cmap=cmap, origin='lower',
+                    extent=[pivot_table.index.min(), pivot_table.index.max(),
+                            pivot_table.columns.min(), pivot_table.columns.max()],
+                    vmin=vmin_plot, vmax=vmax_plot)
+
+    # Add colorbar with reduced distance from plot
+    cbar = fig.colorbar(img, ax=ax, pad=0.02)
+
+    # Set colorbar ticks
+    colorbar_ticks = []
+    if global_min < 0:
+        colorbar_ticks.append(round(global_min, 2))
+    colorbar_ticks.append(0.00)
+    if global_max > 0:
+        num_intervals = 3
+        positive_ticks = np.linspace(0, global_max, num_intervals + 1)[1:]  # Exclude 0
+        colorbar_ticks.extend([round(tick, 2) for tick in positive_ticks])
+        colorbar_ticks.append(round(global_max, 2))
+    elif global_max == 0 and global_min < 0:
+        colorbar_ticks.append(round(global_max, 2))
+
+    colorbar_ticks = sorted(list(set(colorbar_ticks)))  # Remove duplicates and sort
+    cbar.set_ticks(colorbar_ticks)
+    cbar.set_ticklabels([f'{tick:.2f}' for tick in colorbar_ticks])
+
+    # Set colorbar label at the top
+    cbar.ax.set_title(r'$\lambda_{\mathrm{max}}$', pad=20, fontsize=25)
+
+    # Set axis labels
+    ax.set_xlabel(x_name, fontsize=25)
+    ax.set_ylabel(y_name, fontsize=25)
+
+    # Set font size for axis ticks
+    ax.tick_params(axis='both', which='major', labelsize=20)
+
+    # Set font size for colorbar ticks
+    cbar.ax.tick_params(labelsize=20)
+
+    # --- Set x-axis ticks ---
+    x_min, x_max = pivot_table.index.min(), pivot_table.index.max()
+    x_ticks = np.linspace(x_min, x_max, 5)
+    ax.set_xticks(x_ticks)
+    ax.set_xticklabels([f'{tick:.2f}' for tick in x_ticks])
+
+    # --- Set y-axis ticks ---
+    y_min, y_max = pivot_table.columns.min(), pivot_table.columns.max()
+    y_ticks = np.linspace(y_min, y_max, 5)
+    ax.set_yticks(y_ticks)
+    ax.set_yticklabels([f'{tick:.2f}' for tick in y_ticks])
+
+    # Adjust layout to prevent cropping
+    plt.tight_layout()
+
+    # --- Save the figure in both PNG and EPS formats ---
+    base_output_path = os.path.join(path, save_name)
+    plt.savefig(base_output_path + '.png', format='png', dpi=300)
+    plt.savefig(base_output_path + '.eps', format='eps')
+    plt.close()
+```
+
+#### File: `plot_single_neuron_states.py`
+```python
+# plot_single_neuron_states.py
+
+import os
+import matplotlib
+matplotlib.use('Qt5Agg')
+import matplotlib.pyplot as plt
+import diffrax as dfx
+from src.hr_model.model import HindmarshRose, DEFAULT_PARAMS, DEFAULT_STATE0
+
+# --- 1. SIMULATION SETUP ---
+
+print("Setting up and running single neuron simulation...")
+
+# Use a copy of the default parameters
+sim_params = DEFAULT_PARAMS.copy()
+
+# Create an instance of the Hindmarsh-Rose model for a single neuron (N=1)
+# We provide a constant external current and no coupling.
+hr_single_neuron = HindmarshRose(
+    N=1,
+    params=sim_params,
+    initial_state=DEFAULT_STATE0,
+    I_ext=0.8,
+    xi=0
+)
+
+# Define integration settings
+start_time = 0
+end_time = 2000
+dt_initial = 0.05
+n_points = 20000  # Number of data points to save
+max_steps = int((end_time - start_time) / dt_initial) * 20
+
+# Configure the numerical solver from the diffrax library
+solver = dfx.Tsit5()
+stepsize_controller = dfx.PIDController(rtol=1e-8, atol=1e-10)
+
+# --- 2. RUN SIMULATION ---
+
+# Execute the solver to integrate the neuron's dynamics over time
+hr_single_neuron.solve(
+    solver=solver,
+    t0=start_time,
+    t1=end_time,
+    dt0=dt_initial,
+    n_points=n_points,
+    stepsize_controller=stepsize_controller,
+    max_steps=max_steps
+)
+
+# Retrieve the simulation results as a dictionary
+# We set transient_ratio to 0.75 to discard the initial 75% of the data.
+results = hr_single_neuron.get_results_dict(transient_ratio=7/8)
+print("Simulation finished.")
+
+# --- 3. PLOTTING ---
+
+print("Generating and saving plots for each state variable...")
+
+# Define the properties for each state variable plot
+# This list contains (dict_key, LaTeX_label, plot_title, color)
+series_to_plot = [
+    ('x1', r'$x$', '(a)', 'darkblue'),
+    ('y1', r'$y$', '(b)', 'C2'),
+    ('z1', r'$z$', '(c)', 'C1'),
+    ('u1', r'$u$', '(d)', 'tomato'),
+    ('phi1', r'$\phi$', '(e)', 'purple'),
+]
+
+output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Single Neuron')
+os.makedirs(output_dir, exist_ok=True)
+
+# Loop through each state variable to create and save its plot
+for key, label, title, color in series_to_plot:
+    # Create a new square figure with high resolution and tight layout
+    fig, ax = plt.subplots(
+        figsize=(4, 4),
+        dpi=200,
+        constrained_layout=True
+    )
+
+    # Plot the time series data for the current state variable
+    ax.plot(results['t'], results[key], c=color, linewidth=1.5)
+
+    # Set labels, title, and grid, matching the reference style
+    ax.set_xlabel(r'$t$', fontsize=18)
+    ax.set_ylabel(label, fontsize=18)
+    ax.set_title(title, fontsize=20)
+    ax.grid(True)
+
+    # Enforce a square aspect ratio for the plot area
+    ax.set_box_aspect(1.0)
+
+    # Remove the blank space (margins) at the start and end of the x-axis
+    ax.margins(x=0)
+
+    # --- Explicitly set x-axis ticks to include endpoints ---
+    time_data = results['t']
+    if time_data.size > 0:
+        # Get the start and end times from the post-transient data
+        t_min, t_max = time_data[0], time_data[-1]
+
+        # Get the automatically generated ticks as a starting point
+        current_ticks = ax.get_xticks()
+
+        # Create a new list for ticks, ensuring the first and last are included
+        new_ticks = [t_min]
+        # Add the existing ticks that are not too close to the endpoints
+        for tick in current_ticks:
+            if tick > t_min and tick < t_max:
+                new_ticks.append(tick)
+        new_ticks.append(t_max)
+
+        # Set the new ticks on the axis
+        ax.set_xticks(new_ticks)
+
+    # Define the file paths for both PNG and EPS formats
+    png_path = os.path.join(output_dir, f'{key}.png')
+    eps_path = os.path.join(output_dir, f'{key}.eps')
+    fig.savefig(png_path, format='png', dpi=200)
+    fig.savefig(eps_path, format='eps')
+
+    # Close the figure to free up memory before the next loop iteration
+    plt.close(fig)
+
+print("All plots have been saved to the current directory.")
+
+```
+
+#### File: `plot_v_h_dot_1D.py`
+```python
+import matplotlib
+matplotlib.use("Qt5Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+
+# --- Define Directory ---
+path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'VDOT_1D/')
+os.makedirs(path, exist_ok=True)
+
+file_name = 'V_H_DOT_k_-2.5_2.npz'
+
+data = np.load(path + file_name)
+PARAM_VALUES = data['PARAM_VALUES']
+mean_dVdt = data['mean_dVdt']
+mean_dHdt = data['mean_dHdt']
+TARGET_PARAM = data['TARGET_PARAM']
+
+# ── Combined Plot ───────────────────────────────────────────────────────────
+
+import matplotlib
+matplotlib.use('Qt5Agg')
+import matplotlib.pyplot as plt
+
+# mask out any non-finite values
+x_vals = np.asarray(PARAM_VALUES, dtype=float)
+
+# compute x-limits (assuming PARAM_VALUES has no NaN/Inf)
+x_min, x_max = np.nanmin(x_vals), np.nanmax(x_vals)
+
+# create the figure and axes
+fig, ax = plt.subplots(
+    figsize=(4, 4),
+    dpi=200,
+    constrained_layout=True
+)
+
+# plot your two curves
+ax.plot(PARAM_VALUES, mean_dVdt, color="blue", label=r'$dV/dt$')
+ax.plot(PARAM_VALUES, mean_dHdt, color="red", label=r'$dH/dt$')
+
+# optional: ensure ticks include endpoints
+ax.set_xticks([x_min] + list(ax.get_xticks()) + [x_max])
+
+# labels, title, grid, legend
+ax.set_xlabel(r'$k$', fontsize=18)
+ax.set_ylabel(r'$dV/dt, dH/dt$', fontsize=18)
+ax.set_title("(b)", fontsize=20)
+ax.grid(True)
+ax.legend(loc="best", fontsize=14)
+
+# enforce square aspect and remove x-margins
+ax.set_box_aspect(1.0)
+ax.set_xlim(x_min, x_max)
+ax.margins(x=0)
+
+png_path = os.path.join(path, f'k.png')
+eps_path = os.path.join(path, f'k.eps')
+fig.savefig(png_path, format='png', dpi=200)
+fig.savefig(eps_path, format='eps')
+
+
+
+```
+
+#### File: `plot_v_h_dot_2D.py`
+```python
+# plot_vdot_2d_swapped.py  – PARAM_X on x-axis, PARAM_Y on y-axis
+# --------------------------------------------------------------
+
+import matplotlib
+matplotlib.use("Qt5Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+from pathlib import Path
+import os
+
+# ── Edit these two lines to your file location ─────────────────────────
+path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'VDOT_2D/')
+os.makedirs(path, exist_ok=True)
+
+file_name = 'VDOT_ge_0-1_m_0-1.npz'
+
+# ── Load data ──────────────────────────────────────────────────────────
+data = np.load(path / file_name)
+x_vals     = data['x_vals']                 # PARAM_X values
+y_vals     = data['y_vals']                 # PARAM_Y values
+mean_dVdt  = data['mean_dVdt']              # shape (NX, NY)
+mean_dHdt  = data['mean_dHdt']
+
+# maskout some values
+# mean_dHdt[np.where(mean_dHdt < -1)] = np.nan
+# mean_dHdt[np.where(mean_dHdt > 450)] = np.nan
+
+PARAM_X = data['PARAM_X'].item()
+PARAM_Y = data['PARAM_Y'].item()
+
+# ── Build grid with x on rows, y on columns (needs transpose) ──────────
+Xg, Yg = np.meshgrid(x_vals, y_vals)        # shapes (NY, NX)
+
+
+import matplotlib
+matplotlib.use('Qt5Agg')
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Helper to compute 5 ticks from data grid
+def five_ticks(grid):
+    mn, mx = np.min(grid), np.max(grid)
+    ticks = np.linspace(mn, mx, 5)
+    ticks = np.round(ticks, 1)
+    return ticks
+
+# ── Plot 1 : 〈dV/dt〉 ───────────────────────────────────────────────────
+fig_dV, ax_dV = plt.subplots(figsize=(4, 4), dpi=200, constrained_layout=True)
+
+ax_dV.set_box_aspect(1.0)
+pcm1 = ax_dV.pcolormesh(Xg, Yg, mean_dVdt.T, shading='auto', cmap='seismic')
+ax_dV.set_xlabel(r'$ge$', fontsize=18)
+ax_dV.set_ylabel(r'$m$', fontsize=18)
+ax_dV.set_title('(b1)', fontsize=20)
+
+# set 5 ticks on x and y
+xticks = five_ticks(Xg)
+yticks = five_ticks(Yg)
+ax_dV.set_xticks(xticks)
+ax_dV.set_yticks(yticks)
+ax_dV.set_xticklabels([f"{t:.1f}" for t in xticks])
+ax_dV.set_yticklabels([f"{t:.1f}" for t in yticks])
+
+# colorbar with title‐label on top
+cbar1 = fig_dV.colorbar(pcm1, ax=ax_dV, pad=0.0001, fraction=0.05)
+cbar1.ax.set_title(r'$dV/dt$', pad=7, fontdict={'fontsize':15})
+
+# ── Plot 2 : 〈dH/dt〉 ───────────────────────────────────────────────────
+fig_dH, ax_dH = plt.subplots(figsize=(4, 4), dpi=200, constrained_layout=True)
+
+ax_dH.set_box_aspect(1.0)
+pcm2 = ax_dH.pcolormesh(Xg, Yg, mean_dHdt.T, shading='auto', cmap='seismic')
+ax_dH.set_xlabel(r'$ge$', fontsize=18)
+ax_dH.set_ylabel(r'$m$', fontsize=18)
+ax_dH.set_title('(b2)', fontsize=20)
+
+# set 5 ticks on x and y
+ax_dH.set_xticks(xticks)
+ax_dH.set_yticks(yticks)
+ax_dH.set_xticklabels([f"{t:.1f}" for t in xticks])
+ax_dH.set_yticklabels([f"{t:.1f}" for t in yticks])
+
+cbar2 = fig_dH.colorbar(pcm2, ax=ax_dH, pad=0.0001, fraction=0.05)
+cbar2.ax.set_title(r'$dH/dt$', pad=7, fontdict={'fontsize':15})
+
+png_dV_path = os.path.join(path, f'k.png')
+eps_dV_path = os.path.join(path, f'k.eps')
+fig_dV.savefig(png_dV_path, format='png', dpi=200)
+fig_dV.savefig(eps_dV_path, format='eps')
+
+png_dH_path = os.path.join(path, f'k.png')
+eps_dH_path = os.path.join(path, f'k.eps')
+fig_dH.savefig(png_dH_path, format='png', dpi=200)
+fig_dH.savefig(eps_dH_path, format='eps')
+
+
+
 ```
 
 ================================================================================
@@ -1733,7 +2547,7 @@ if __name__ == '__main__':
 
     results_coupled = hr_coupled.get_results_dict(transient_ratio)
 
-    plot_all_time_series(results_coupled, N=2, title="Two Coupled Neurons Simulation")
+    # plot_all_time_series(results_coupled, N=2, title="Two Coupled Neurons Simulation")
 ```
 
 #### File: `physics.py`
@@ -2104,8 +2918,17 @@ if __name__ == '__main__':
 ```
 
 ================================================================================
-## Folder: src/sphnn_pinn
+## Folder: src/.ipynb_checkpoints
 ------------------------------------------------------------
+
+================================================================================
+## Folder: src/sph_pinn
+------------------------------------------------------------
+### Other Files:
+- 3Stage.ipynb
+- Combined_State_Hamil.ipynb
+- Combined_State_Hamil_JRH.ipynb
+
 ### Python Source Files:
 
 #### File: `Combined_State_Hamiltonian.py`
@@ -2840,819 +3663,4 @@ plt.tight_layout(rect=[0, 0, 1, 0.97])
 
 
 plt.show()
-```
-
-================================================================================
-## Folder: visualization/literature plots
-------------------------------------------------------------
-### Python Source Files:
-
-#### File: `plot_TS_PhP.py`
-```python
-import os
-import diffrax as dfx
-import matplotlib.pyplot as plt
-from matplotlib.ticker import FormatStrFormatter
-from src.hr_model.model import HindmarshRose, DEFAULT_PARAMS, DEFAULT_STATE0
-
-
-# ==============================================================================
-# 1. LOCAL PLOTTING FUNCTIONS
-# ==============================================================================
-
-def plot_time_series(t, x, title_suffix, save_path_prefix=None):
-    """Plots the time series of variable x after a transient period."""
-
-    plt.figure(figsize=(8, 8), layout='tight')
-    plt.suptitle(f'{title_suffix}', fontsize=30, y=0.957)
-    plt.plot(t, x, c='k')
-    plt.xlabel(r'$t$', fontsize=25)
-    plt.ylabel(r'$x$', fontsize=25)
-    plt.tick_params(axis='both', which='major', labelsize=20)
-
-    if len(t) > 0:
-        t_min, t_max = t.min(), t.max()
-        plt.xlim([t_min, t_max + (t_max - t_min) * 0.01])
-
-    ax = plt.gca()
-    ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-
-    if save_path_prefix:
-        plt.savefig(save_path_prefix + '.png', format='png', dpi=300)
-        plt.savefig(save_path_prefix + '.eps', format='eps')
-        plt.close()
-    else:
-        plt.show(block=True)
-
-
-def plot_phase_portrait(x, y, title_suffix, save_path_prefix=None):
-    """Plots the phase portrait (x vs y) after a transient period."""
-
-    plt.figure(figsize=(8, 8), layout='tight')
-    plt.suptitle(f'{title_suffix}', fontsize=30, y=0.957)
-    plt.plot(x, y, c='k')
-    plt.xlabel(r'$x$', fontsize=25)
-    plt.ylabel(r'$y$', fontsize=25)
-    plt.tick_params(axis='both', which='major', labelsize=20)
-    ax = plt.gca()
-    ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    ax.xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-
-    if save_path_prefix:
-        plt.savefig(save_path_prefix + '.png', format='png', dpi=300)
-        plt.savefig(save_path_prefix + '.eps', format='eps')
-        plt.close()
-    else:
-        plt.show(block=True)
-
-
-# ==============================================================================
-# 2. MAIN SCRIPT LOGIC
-# ==============================================================================
-
-# --- Define the two specific simulation setups ---
-setups = [
-    {'name': 'rho_fixed', 'rho': 0.7, 'k': 0.36, 'm': 0.25},
-    {'name': 'rho_fixed', 'rho': 0.7, 'k': 0.36, 'm': 0.5},
-    {'name': 'rho_fixed', 'rho': 0.7, 'k': 0.36, 'm': 1},
-    {'name': 'k_fixed', 'rho': 0.7, 'k': 0.87, 'm': 0.25},
-    {'name': 'k_fixed', 'rho': 0.7, 'k': 0.87, 'm': 0.5},
-    {'name': 'k_fixed', 'rho': 0.7, 'k': 0.87, 'm': 1}
-]
-
-# --- Define Output Directory ---
-output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Phase Portrait')
-os.makedirs(output_dir, exist_ok=True)
-print(f"Plots will be saved to: {output_dir}")
-
-# --- Loop Through Setups and Run Simulations ---
-for setup_params in setups:
-    m_val = setup_params['m']
-    setup_name = setup_params['name']
-    print(f"\n--- Running simulation for setup: '{setup_name}' (m = {m_val}) ---")
-
-    # --- Use simulation example from model.py ---
-    sim_params = DEFAULT_PARAMS.copy()
-    sim_params.update(setup_params)  # Update params for the current setup
-
-    # Create the model instance
-    hr_model = HindmarshRose(N=1, params=sim_params, initial_state=DEFAULT_STATE0, I_ext=0.8, xi=0)
-
-    # Integration settings
-    start_time = 0
-    end_time = 2000
-    dt_initial = 0.05
-    n_points = 20000
-    max_steps = int((end_time - start_time) / dt_initial) * 20
-    solver = dfx.Tsit5()
-    stepsize_controller = dfx.PIDController(rtol=1e-8, atol=1e-10)
-
-    # Run the solver
-    hr_model.solve(
-        solver=solver, t0=start_time, t1=end_time, dt0=dt_initial, n_points=n_points,
-        stepsize_controller=stepsize_controller, max_steps=max_steps)
-
-    # Get results, discarding the first 75% as transient
-    transient_discard_ratio = 0.75
-    results = hr_model.get_results_dict(transient_ratio=transient_discard_ratio)
-    t_sol, x_sol, y_sol = results['t'], results['x1'], results['y1']
-
-    # --- Use exact plotting logic from the original script ---
-    if m_val == 1:
-        xt_title_suffix, xy_title_suffix = '(a1)', '(a2)'
-    elif m_val == 0.5:
-        xt_title_suffix, xy_title_suffix = '(b1)', '(b2)'
-    elif m_val == 0.25:
-        xt_title_suffix, xy_title_suffix = '(c1)', '(c2)'
-    else:
-        xt_title_suffix, xy_title_suffix = '(x1)', '(x2)'
-
-    # --- Create filenames and save plots ---
-    base_filename_ts = f"timeseries_{setup_name}_{xt_title_suffix.strip('()')}"
-    save_path_prefix_ts = os.path.join(output_dir, base_filename_ts)
-
-    base_filename_pp = f"phase_portrait_{setup_name}_{xy_title_suffix.strip('()')}"
-    save_path_prefix_pp = os.path.join(output_dir, base_filename_pp)
-
-    # Plot and save the time series using the local function
-    plot_time_series(t_sol, x_sol, xt_title_suffix, save_path_prefix=save_path_prefix_ts)
-
-    # Plot and save the phase portrait using the local function
-    plot_phase_portrait(x_sol, y_sol, xy_title_suffix, save_path_prefix=save_path_prefix_pp)
-
-print("\nAll simulations and plots saved successfully.")
-```
-
-#### File: `plot_bif_lya.py`
-```python
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-from matplotlib.ticker import FuncFormatter
-import os # Add this import
-
-
-
-# --- Define paths to the data directories relative to the data ---
-path_bif = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Bifurcation/')
-os.makedirs(path_bif, exist_ok=True)
-
-path_lya = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Lyapanov 1D/')
-os.makedirs(path_lya, exist_ok=True)
-
-# --- Define output directory ---
-output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Bif_Lya_plots')
-os.makedirs(output_dir, exist_ok=True)
-
-
-
-bif_names = ['Bif_k_rho_0.7_m_1.npy', 'Bif_k_rho_0.7_m_0.5.npy', 'Bif_k_rho_0.7_m_0.25.npy',
-             'Bif_rho_k_0.87_m_1.npy', 'Bif_rho_k_0.87_m_0.5.npy', 'Bif_rho_k_0.87_m_0.25.npy']
-lya_names = ['Lya_k_rho_0.7_m_1.txt', 'Lya_k_rho_0.7_m_0.5.txt', 'Lya_k_rho_0.7_m_0.25.txt',
-             'Lya_rho_k_0.87_m_1.txt', 'Lya_rho_k_0.87_m_0.5.txt', 'Lya_rho_k_0.87_m_0.25.txt']
-save_names = ['k_m_1', 'k_m_0.5', 'k_m_0.25',
-              'rho_m_1', 'rho_m_0.5', 'rho_m_0.25']
-x_names = [r'$k$', r'$k$', r'$k$', r'$\rho$', r'$\rho$', r'$\rho$']
-titles = ['(a)', '(b)', '(c)', '(a)', '(b)', '(c)']
-
-leg_poss = [(0, 0), (0, 0), (0, 0), (0, 0), (0.75, 0), (0, 0)]
-
-for bif_name, lya_name, save_name, title, leg_pos, x_name in zip(
-        bif_names, lya_names, save_names, titles, leg_poss, x_names):
-
-    # Load data
-    data_lya = np.array(pd.read_csv(path_lya+lya_name, delim_whitespace=True, header=None))
-    data_bif = np.load(path_bif+bif_name)
-
-
-    # Function to format ticks to 2 decimal places
-    def format_func(value, tick_number):
-        return f'{value:.2f}'
-
-
-    # Define the size of each subplot (square dimensions)
-    subplot_size = 6  # in inches
-
-    # Calculate the total figure size
-    total_width = subplot_size
-    total_height = 1.25 * subplot_size
-
-    # Create the figure and subplots with adjusted size and spacing
-    fig, (ax1, ax2) = plt.subplots(
-        2, 1,
-        figsize=(total_width, total_height),
-        gridspec_kw={'height_ratios': [1, 1]}
-    )
-    fig.suptitle(title, fontsize=30, y=0.95)
-
-    ### Subplot 1: Scatter Plot
-    # Plot the data
-    ax1.scatter(data_bif[:, 0], data_bif[:, 1], s=0.01, c='k')
-
-    # Set labels and format
-    ax1.set_ylabel(r'$x_{\text{max}}$', fontsize=25)
-    ax1.set_xticks([])
-    ax1.tick_params(axis='both', which='major', labelsize=16)
-    ax1.set_xlim([data_bif[:, 0].min(), data_bif[:, 0].max()])
-    ax1.xaxis.set_major_formatter(FuncFormatter(format_func))
-    ax1.yaxis.set_major_formatter(FuncFormatter(format_func))
-
-    # Set y-limits to data range
-    y_min_ax1 = data_bif[:, 1].min()
-    y_max_ax1 = data_bif[:, 1].max()
-    ax1.set_ylim([y_min_ax1, y_max_ax1])
-
-    # Set y-ticks
-    ax1.set_yticks(np.linspace(y_min_ax1, y_max_ax1, 5))
-
-    # Adjust aspect ratio
-    ax1.set_aspect('auto')
-
-    ### Subplot 2: Line Plot
-    # Plot the data
-    ax2.plot(data_lya[:, 0], data_lya[:, 1], label="LE 1", linewidth=1.5, c='b')
-    ax2.plot(data_lya[:, 0], data_lya[:, 3], label="LE 2", linewidth=1.5, c='r')
-
-    # Set labels and format
-
-    ax2.set_xlabel(x_name, fontsize=25)
-    ax2.set_ylabel(r'$LEs$', fontsize=25)
-    ax2.tick_params(axis='both', which='major', labelsize=16)
-    ax2.set_xlim([data_lya[:, 0].min(), data_lya[:, 0].max()])
-    ax2.set_xticks(np.linspace(data_lya[:, 0].min(), data_lya[:, 0].max(), 5))
-    ax2.xaxis.set_major_formatter(FuncFormatter(format_func))
-    ax2.yaxis.set_major_formatter(FuncFormatter(format_func))
-    ax2.legend(fontsize=12, loc='lower left', bbox_to_anchor=leg_pos)
-    ax2.grid(True)
-
-    # Set y-limits to data range
-
-    y_min_ax2 = min(data_lya[:, 1][~np.isnan(data_lya[:, 1])].min(),
-                    data_lya[:, 3][~np.isnan(data_lya[:, 3])].min())
-    y_max_ax2 = max(data_lya[:, 1][~np.isnan(data_lya[:, 1])].max(),
-                    data_lya[:, 3][~np.isnan(data_lya[:, 3])].max())
-    ax2.set_ylim([y_min_ax2, y_max_ax2])
-
-    # Set y-ticks
-    ax2.set_yticks(np.linspace(y_min_ax2, y_max_ax2, 5))
-
-    # Adjust aspect ratio
-    ax2.set_aspect('auto')
-
-    # **Adjust layout to prevent labels from being cut off**
-    plt.tight_layout()
-
-    # If labels are still cut off, adjust the margins manually
-    # fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.1, hspace=0.3)
-
-    # --- Save the figure in both PNG and EPS formats ---
-    base_output_path = os.path.join(output_dir, save_name)
-    plt.savefig(base_output_path + '.png', format='png', dpi=600)
-    plt.savefig(base_output_path + '.eps', format='eps')
-    plt.close()
-```
-
-#### File: `plot_error_system.py`
-```python
-import os
-import matplotlib
-matplotlib.use('Qt5Agg')
-import matplotlib.pyplot as plt
-import diffrax as dfx
-import jax.numpy as jnp
-from src.hr_model.error_system import HRNetworkErrorSystem
-from src.hr_model.model import DEFAULT_PARAMS
-
-# ======================================================================
-# 1. SIMULATION SETUP & EXECUTION
-# ======================================================================
-
-# --- Initial Conditions & Parameters ---
-# Initial state (x, y, z, u, φ for each neuron)
-INITIAL_HR_STATE0 = [
-    0.1, 0.2, 0.3, 0.4, 0.1,   # neuron 1
-    0.2, 0.3, 0.4, 0.5, 0.2    # neuron 2
-]
-
-# [cite_start]External currents and coupling matrix [cite: 151]
-I_ext = [0.8, 0.8]
-xi = [[0, 1], [1, 0]]
-sim_params = DEFAULT_PARAMS.copy()
-
-# --- Create Simulator Instance ---
-# Using 'complete' dynamics as in the example
-simulator = HRNetworkErrorSystem(params=sim_params, dynamics='complete',
-                                 hr_initial_state=INITIAL_HR_STATE0, I_ext=I_ext, hr_xi=xi)
-
-# --- Integration Settings ---
-start_time = 0
-end_time = 1000
-dt_initial = 0.01
-point_num = 10000
-transient_ratio = 0
-n_points = dfx.SaveAt(ts=jnp.linspace(start_time, end_time, point_num), dense=True)
-max_steps = int((end_time - start_time) / dt_initial) * 20
-solver = dfx.Tsit5()
-stepsize_controller = dfx.PIDController(rtol=1e-10, atol=1e-12)
-
-# --- Run Simulation ---
-print("Running simulation...")
-simulator.solve(
-    solver=solver,
-    t0=start_time,
-    t1=end_time,
-    dt0=dt_initial,
-    n_points=n_points,
-    stepsize_controller=stepsize_controller,
-    max_steps=max_steps
-)
-print("Simulation finished.")
-
-# --- Get Results ---
-results = simulator.get_results_dict(transient_ratio)
-
-
-# ======================================================================
-# 2. PLOTTING
-# This section is preserved from the original plot_error_system.py
-# ======================================================================
-
-# --- Define the Directory ---
-output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Error System')
-os.makedirs(output_dir, exist_ok=True)
-print(f"Saving figures to '{output_dir}/'")
-
-# --- Define Plotting Series ---
-series = [
-    ('e_x', r'$e_x$', 'darkblue', '(a)'),
-    ('e_y', r'$e_y$', 'C2', '(b)'),
-    ('e_z', r'$e_z$', 'C1', '(c)'),
-    ('e_u', r'$e_u$', 'tomato', '(d)'),
-    ('e_phi', r'$e_\phi$', 'purple', '(e)'),
-]
-
-# --- Generate and Save Plots ---
-for key, label, color, title in series:
-    # Create a new square figure with high resolution and tight layout
-    fig, ax = plt.subplots(
-        figsize=(4, 4),
-        dpi=200,
-        constrained_layout=True)
-
-    # Plot the data
-    ax.plot(results['t'], results[key], c=color, linewidth=1.5)
-
-    # Set labels, title, grid, aspect ratio, and margins
-    ax.set_xlabel(r'$t$',   fontsize=18)
-    ax.set_ylabel(label,    fontsize=18)
-    ax.set_title(f'{title.strip("$")}', fontsize=20)
-    ax.grid(True)
-    ax.set_box_aspect(1.0)
-    ax.margins(x=0)
-
-    # Define save paths and save the figure in both PNG and EPS formats
-    png_path = os.path.join(output_dir, f'{key}.png')
-    eps_path = os.path.join(output_dir, f'{key}.eps')
-    fig.savefig(png_path, format='png', dpi=200)
-    fig.savefig(eps_path, format='eps')
-
-    plt.close(fig)
-
-print("All plots have been generated and saved successfully.")
-```
-
-#### File: `plot_lya2D_heatmap.py`
-```python
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-import matplotlib.colors as mcolors
-import os
-
-
-
-
-
-# --- Define the Directory ---
-path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Lyapanov 2D/')
-os.makedirs(path, exist_ok=True)
-
-file_names = ['Max_Lya_k_m.txt', 'Max_Lya_rho_m.txt', 'Max_Lya_rho_k_m_1.txt',
-              'Max_Lya_rho_k_m_0.5.txt', 'Max_Lya_rho_k_m_0.25.txt']
-
-save_names = ['K_M', 'Rho_M', 'Rho_K0_M_1',
-              'Rho_K0_M_0.5', 'Rho_K0_M_0.25']
-
-x_names = [r'$k$', r'$\rho$', r'$\rho$', r'$\rho$', r'$\rho$']
-y_names = [r'$m$', r'$m$', r'$k$', r'$k$', r'$k$']
-titles = ['(a)', '(b)', '(c1)', '(c2)', '(c3)']
-
-global_min = float('inf')
-global_max = float('-inf')
-
-# First pass: Determine global min and max across all files
-for file_name in file_names:
-    df = pd.read_csv(path + file_name, delim_whitespace=True, header=None)
-    pivot_table = df.pivot(index=0, columns=2, values=1).fillna(0)
-    array_2d = np.rot90(pivot_table.to_numpy(), k=1)
-    global_min = min(global_min, np.nanmin(array_2d))
-    global_max = max(global_max, np.nanmax(array_2d))
-
-# Iterate through files again to create plots with consistent colorbar
-for file_name, save_name, x_name, y_name, title in zip(
-        file_names, save_names, x_names, y_names, titles):
-
-    # Read the file into a DataFrame
-    df = pd.read_csv(path + file_name, delim_whitespace=True, header=None)
-
-    # Pivot the DataFrame to reshape it into a 2D array
-    pivot_table = df.pivot(index=0, columns=2, values=1)
-
-    # Fill NaNs with a value if necessary, h.g., 0
-    pivot_table = pivot_table.fillna(0)
-
-    # Convert to a 2D numpy array
-    array_2d = np.rot90(pivot_table.to_numpy(), k=1)
-
-    # Define custom colormap: black to yellow to red
-    colors = ['black', 'yellow', 'red']
-    n_bins = int((global_max * 100 / (
-                global_max - global_min)) * 128) if global_min != global_max else 256  # Handle case where min == max
-    cmap_custom = mcolors.LinearSegmentedColormap.from_list("custom", colors, N=n_bins)
-
-    # Combine white for negative values with the custom colormap
-    if global_min < 0:
-        cmap_pos = cmap_custom(np.linspace(0, 1, n_bins))
-        cmap_min_len = int(
-            (abs(global_min) * 100 / (global_max - global_min)) * 128) if global_min != global_max else 128
-        cmap_min = np.array([[1, 1, 1, 1]] * cmap_min_len)
-        cmap_combined = np.vstack((cmap_min, cmap_custom(np.linspace(0, 1, n_bins))))
-        cmap = mcolors.ListedColormap(cmap_combined)
-        vmin_plot = global_min
-        vmax_plot = global_max
-    else:
-        cmap = cmap_custom
-        vmin_plot = global_min
-        vmax_plot = global_max
-
-    # Plot the heatmap
-    fig, ax = plt.subplots(figsize=(8, 8), dpi=1000)
-    plt.suptitle(title, fontsize=30, y=0.90)
-    img = ax.imshow(array_2d, aspect='auto', cmap=cmap, origin='lower',
-                    extent=[pivot_table.index.min(), pivot_table.index.max(),
-                            pivot_table.columns.min(), pivot_table.columns.max()],
-                    vmin=vmin_plot, vmax=vmax_plot)
-
-    # Add colorbar with reduced distance from plot
-    cbar = fig.colorbar(img, ax=ax, pad=0.02)
-
-    # Set colorbar ticks
-    colorbar_ticks = []
-    if global_min < 0:
-        colorbar_ticks.append(round(global_min, 2))
-    colorbar_ticks.append(0.00)
-    if global_max > 0:
-        num_intervals = 3
-        positive_ticks = np.linspace(0, global_max, num_intervals + 1)[1:]  # Exclude 0
-        colorbar_ticks.extend([round(tick, 2) for tick in positive_ticks])
-        colorbar_ticks.append(round(global_max, 2))
-    elif global_max == 0 and global_min < 0:
-        colorbar_ticks.append(round(global_max, 2))
-
-    colorbar_ticks = sorted(list(set(colorbar_ticks)))  # Remove duplicates and sort
-    cbar.set_ticks(colorbar_ticks)
-    cbar.set_ticklabels([f'{tick:.2f}' for tick in colorbar_ticks])
-
-    # Set colorbar label at the top
-    cbar.ax.set_title(r'$\lambda_{\mathrm{max}}$', pad=20, fontsize=25)
-
-    # Set axis labels
-    ax.set_xlabel(x_name, fontsize=25)
-    ax.set_ylabel(y_name, fontsize=25)
-
-    # Set font size for axis ticks
-    ax.tick_params(axis='both', which='major', labelsize=20)
-
-    # Set font size for colorbar ticks
-    cbar.ax.tick_params(labelsize=20)
-
-    # --- Set x-axis ticks ---
-    x_min, x_max = pivot_table.index.min(), pivot_table.index.max()
-    x_ticks = np.linspace(x_min, x_max, 5)
-    ax.set_xticks(x_ticks)
-    ax.set_xticklabels([f'{tick:.2f}' for tick in x_ticks])
-
-    # --- Set y-axis ticks ---
-    y_min, y_max = pivot_table.columns.min(), pivot_table.columns.max()
-    y_ticks = np.linspace(y_min, y_max, 5)
-    ax.set_yticks(y_ticks)
-    ax.set_yticklabels([f'{tick:.2f}' for tick in y_ticks])
-
-    # Adjust layout to prevent cropping
-    plt.tight_layout()
-
-    # --- Save the figure in both PNG and EPS formats ---
-    base_output_path = os.path.join(path, save_name)
-    plt.savefig(base_output_path + '.png', format='png', dpi=300)
-    plt.savefig(base_output_path + '.eps', format='eps')
-    plt.close()
-```
-
-#### File: `plot_single_neuron_states.py`
-```python
-# plot_single_neuron_states.py
-
-import os
-import matplotlib
-matplotlib.use('Qt5Agg')
-import matplotlib.pyplot as plt
-import diffrax as dfx
-from src.hr_model.model import HindmarshRose, DEFAULT_PARAMS, DEFAULT_STATE0
-
-# --- 1. SIMULATION SETUP ---
-
-print("Setting up and running single neuron simulation...")
-
-# Use a copy of the default parameters
-sim_params = DEFAULT_PARAMS.copy()
-
-# Create an instance of the Hindmarsh-Rose model for a single neuron (N=1)
-# We provide a constant external current and no coupling.
-hr_single_neuron = HindmarshRose(
-    N=1,
-    params=sim_params,
-    initial_state=DEFAULT_STATE0,
-    I_ext=0.8,
-    xi=0
-)
-
-# Define integration settings
-start_time = 0
-end_time = 2000
-dt_initial = 0.05
-n_points = 20000  # Number of data points to save
-max_steps = int((end_time - start_time) / dt_initial) * 20
-
-# Configure the numerical solver from the diffrax library
-solver = dfx.Tsit5()
-stepsize_controller = dfx.PIDController(rtol=1e-8, atol=1e-10)
-
-# --- 2. RUN SIMULATION ---
-
-# Execute the solver to integrate the neuron's dynamics over time
-hr_single_neuron.solve(
-    solver=solver,
-    t0=start_time,
-    t1=end_time,
-    dt0=dt_initial,
-    n_points=n_points,
-    stepsize_controller=stepsize_controller,
-    max_steps=max_steps
-)
-
-# Retrieve the simulation results as a dictionary
-# We set transient_ratio to 0.75 to discard the initial 75% of the data.
-results = hr_single_neuron.get_results_dict(transient_ratio=7/8)
-print("Simulation finished.")
-
-# --- 3. PLOTTING ---
-
-print("Generating and saving plots for each state variable...")
-
-# Define the properties for each state variable plot
-# This list contains (dict_key, LaTeX_label, plot_title, color)
-series_to_plot = [
-    ('x1', r'$x$', '(a)', 'darkblue'),
-    ('y1', r'$y$', '(b)', 'C2'),
-    ('z1', r'$z$', '(c)', 'C1'),
-    ('u1', r'$u$', '(d)', 'tomato'),
-    ('phi1', r'$\phi$', '(e)', 'purple'),
-]
-
-output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Single Neuron')
-os.makedirs(output_dir, exist_ok=True)
-
-# Loop through each state variable to create and save its plot
-for key, label, title, color in series_to_plot:
-    # Create a new square figure with high resolution and tight layout
-    fig, ax = plt.subplots(
-        figsize=(4, 4),
-        dpi=200,
-        constrained_layout=True
-    )
-
-    # Plot the time series data for the current state variable
-    ax.plot(results['t'], results[key], c=color, linewidth=1.5)
-
-    # Set labels, title, and grid, matching the reference style
-    ax.set_xlabel(r'$t$', fontsize=18)
-    ax.set_ylabel(label, fontsize=18)
-    ax.set_title(title, fontsize=20)
-    ax.grid(True)
-
-    # Enforce a square aspect ratio for the plot area
-    ax.set_box_aspect(1.0)
-
-    # Remove the blank space (margins) at the start and end of the x-axis
-    ax.margins(x=0)
-
-    # --- Explicitly set x-axis ticks to include endpoints ---
-    time_data = results['t']
-    if time_data.size > 0:
-        # Get the start and end times from the post-transient data
-        t_min, t_max = time_data[0], time_data[-1]
-
-        # Get the automatically generated ticks as a starting point
-        current_ticks = ax.get_xticks()
-
-        # Create a new list for ticks, ensuring the first and last are included
-        new_ticks = [t_min]
-        # Add the existing ticks that are not too close to the endpoints
-        for tick in current_ticks:
-            if tick > t_min and tick < t_max:
-                new_ticks.append(tick)
-        new_ticks.append(t_max)
-
-        # Set the new ticks on the axis
-        ax.set_xticks(new_ticks)
-
-    # Define the file paths for both PNG and EPS formats
-    png_path = os.path.join(output_dir, f'{key}.png')
-    eps_path = os.path.join(output_dir, f'{key}.eps')
-    fig.savefig(png_path, format='png', dpi=200)
-    fig.savefig(eps_path, format='eps')
-
-    # Close the figure to free up memory before the next loop iteration
-    plt.close(fig)
-
-print("All plots have been saved to the current directory.")
-
-```
-
-#### File: `plot_v_h_dot_1D.py`
-```python
-import matplotlib
-matplotlib.use("Qt5Agg")
-import matplotlib.pyplot as plt
-import numpy as np
-import os
-
-# --- Define Directory ---
-path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'VDOT_1D/')
-os.makedirs(path, exist_ok=True)
-
-file_name = 'V_H_DOT_k_-2.5_2.npz'
-
-data = np.load(path + file_name)
-PARAM_VALUES = data['PARAM_VALUES']
-mean_dVdt = data['mean_dVdt']
-mean_dHdt = data['mean_dHdt']
-TARGET_PARAM = data['TARGET_PARAM']
-
-# ── Combined Plot ───────────────────────────────────────────────────────────
-
-import matplotlib
-matplotlib.use('Qt5Agg')
-import matplotlib.pyplot as plt
-
-# mask out any non-finite values
-x_vals = np.asarray(PARAM_VALUES, dtype=float)
-
-# compute x-limits (assuming PARAM_VALUES has no NaN/Inf)
-x_min, x_max = np.nanmin(x_vals), np.nanmax(x_vals)
-
-# create the figure and axes
-fig, ax = plt.subplots(
-    figsize=(4, 4),
-    dpi=200,
-    constrained_layout=True
-)
-
-# plot your two curves
-ax.plot(PARAM_VALUES, mean_dVdt, color="blue", label=r'$dV/dt$')
-ax.plot(PARAM_VALUES, mean_dHdt, color="red", label=r'$dH/dt$')
-
-# optional: ensure ticks include endpoints
-ax.set_xticks([x_min] + list(ax.get_xticks()) + [x_max])
-
-# labels, title, grid, legend
-ax.set_xlabel(r'$k$', fontsize=18)
-ax.set_ylabel(r'$dV/dt, dH/dt$', fontsize=18)
-ax.set_title("(b)", fontsize=20)
-ax.grid(True)
-ax.legend(loc="best", fontsize=14)
-
-# enforce square aspect and remove x-margins
-ax.set_box_aspect(1.0)
-ax.set_xlim(x_min, x_max)
-ax.margins(x=0)
-
-png_path = os.path.join(path, f'k.png')
-eps_path = os.path.join(path, f'k.eps')
-fig.savefig(png_path, format='png', dpi=200)
-fig.savefig(eps_path, format='eps')
-
-
-
-```
-
-#### File: `plot_v_h_dot_2D.py`
-```python
-# plot_vdot_2d_swapped.py  – PARAM_X on x-axis, PARAM_Y on y-axis
-# --------------------------------------------------------------
-
-import matplotlib
-matplotlib.use("Qt5Agg")
-import matplotlib.pyplot as plt
-import numpy as np
-from pathlib import Path
-import os
-
-# ── Edit these two lines to your file location ─────────────────────────
-path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'VDOT_2D/')
-os.makedirs(path, exist_ok=True)
-
-file_name = 'VDOT_ge_0-1_m_0-1.npz'
-
-# ── Load data ──────────────────────────────────────────────────────────
-data = np.load(path / file_name)
-x_vals     = data['x_vals']                 # PARAM_X values
-y_vals     = data['y_vals']                 # PARAM_Y values
-mean_dVdt  = data['mean_dVdt']              # shape (NX, NY)
-mean_dHdt  = data['mean_dHdt']
-
-# maskout some values
-# mean_dHdt[np.where(mean_dHdt < -1)] = np.nan
-# mean_dHdt[np.where(mean_dHdt > 450)] = np.nan
-
-PARAM_X = data['PARAM_X'].item()
-PARAM_Y = data['PARAM_Y'].item()
-
-# ── Build grid with x on rows, y on columns (needs transpose) ──────────
-Xg, Yg = np.meshgrid(x_vals, y_vals)        # shapes (NY, NX)
-
-
-import matplotlib
-matplotlib.use('Qt5Agg')
-import matplotlib.pyplot as plt
-import numpy as np
-
-# Helper to compute 5 ticks from data grid
-def five_ticks(grid):
-    mn, mx = np.min(grid), np.max(grid)
-    ticks = np.linspace(mn, mx, 5)
-    ticks = np.round(ticks, 1)
-    return ticks
-
-# ── Plot 1 : 〈dV/dt〉 ───────────────────────────────────────────────────
-fig_dV, ax_dV = plt.subplots(figsize=(4, 4), dpi=200, constrained_layout=True)
-
-ax_dV.set_box_aspect(1.0)
-pcm1 = ax_dV.pcolormesh(Xg, Yg, mean_dVdt.T, shading='auto', cmap='seismic')
-ax_dV.set_xlabel(r'$ge$', fontsize=18)
-ax_dV.set_ylabel(r'$m$', fontsize=18)
-ax_dV.set_title('(b1)', fontsize=20)
-
-# set 5 ticks on x and y
-xticks = five_ticks(Xg)
-yticks = five_ticks(Yg)
-ax_dV.set_xticks(xticks)
-ax_dV.set_yticks(yticks)
-ax_dV.set_xticklabels([f"{t:.1f}" for t in xticks])
-ax_dV.set_yticklabels([f"{t:.1f}" for t in yticks])
-
-# colorbar with title‐label on top
-cbar1 = fig_dV.colorbar(pcm1, ax=ax_dV, pad=0.0001, fraction=0.05)
-cbar1.ax.set_title(r'$dV/dt$', pad=7, fontdict={'fontsize':15})
-
-# ── Plot 2 : 〈dH/dt〉 ───────────────────────────────────────────────────
-fig_dH, ax_dH = plt.subplots(figsize=(4, 4), dpi=200, constrained_layout=True)
-
-ax_dH.set_box_aspect(1.0)
-pcm2 = ax_dH.pcolormesh(Xg, Yg, mean_dHdt.T, shading='auto', cmap='seismic')
-ax_dH.set_xlabel(r'$ge$', fontsize=18)
-ax_dH.set_ylabel(r'$m$', fontsize=18)
-ax_dH.set_title('(b2)', fontsize=20)
-
-# set 5 ticks on x and y
-ax_dH.set_xticks(xticks)
-ax_dH.set_yticks(yticks)
-ax_dH.set_xticklabels([f"{t:.1f}" for t in xticks])
-ax_dH.set_yticklabels([f"{t:.1f}" for t in yticks])
-
-cbar2 = fig_dH.colorbar(pcm2, ax=ax_dH, pad=0.0001, fraction=0.05)
-cbar2.ax.set_title(r'$dH/dt$', pad=7, fontdict={'fontsize':15})
-
-png_dV_path = os.path.join(path, f'k.png')
-eps_dV_path = os.path.join(path, f'k.eps')
-fig_dV.savefig(png_dV_path, format='png', dpi=200)
-fig_dV.savefig(eps_dV_path, format='eps')
-
-png_dH_path = os.path.join(path, f'k.png')
-eps_dH_path = os.path.join(path, f'k.eps')
-fig_dH.savefig(png_dH_path, format='png', dpi=200)
-fig_dH.savefig(eps_dH_path, format='eps')
-
-
-
 ```
