@@ -160,6 +160,7 @@ class HindmarshRose:
 # --- Example Usage ---
 if __name__ == '__main__':
     from visualization.plotting import plot_all_time_series
+    import os
 
     #=======================================================================================
     # --- Example 1: Single Neuron ---
@@ -199,7 +200,7 @@ if __name__ == '__main__':
 
     results_single = hr_single.get_results_dict(transient_ratio)
 
-    plot_all_time_series(results_single, N=1, title="One Neuron Simulation")
+    plot_all_time_series(results_single, N=1, title="One Neuron Simulation", save_fig=False)
 
     #=======================================================================================
     # --- Example 2: Two Coupled Neurons ---
@@ -259,4 +260,4 @@ if __name__ == '__main__':
 
     results_coupled = hr_coupled.get_results_dict(transient_ratio)
 
-    # plot_all_time_series(results_coupled, N=2, title="Two Coupled Neurons Simulation")
+    plot_all_time_series(results_coupled, N=2, title="Two Coupled Neurons Simulation", save_fig=False)

@@ -701,10 +701,10 @@ axes[-1].set_xlabel("Time", fontsize=14)
 fig.savefig(os.path.join(output_dir, 'derivative_fidelity.png'), dpi=300)
 plt.tight_layout(rect=[0, 0, 1, 0.97])
 
-# --- Plot 4: Error System State Trajectories (s) ---
+# --- Plot 4: Error System Dynamics State Trajectories (s) ---
 fig, axes = plt.subplots(s_test.shape[1], 1, figsize=(12, 10), sharex=True)
 state_labels_error = [r'$e_x$', r'$e_y$', r'$e_z$', r'$e_u$', r'$e_\phi$']
-fig.suptitle("Error System State 's' Prediction: True vs. Predicted", fontsize=18, y=0.99)
+fig.suptitle("Error System Dynamics State 's' Prediction: True vs. Predicted", fontsize=18, y=0.99)
 for i in range(s_test.shape[1]):
     axes[i].plot(t_test[:1500], s_test[:1500, i], 'b', label='True State', alpha=0.9)
     axes[i].plot(t_test[:1500], s_pred[:1500, i], 'r', label='Predicted State')

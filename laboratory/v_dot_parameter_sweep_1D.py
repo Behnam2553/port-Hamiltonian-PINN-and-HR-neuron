@@ -58,7 +58,7 @@ I_EXT = [0.8, 0.8]  # external currents
 XI = [[0, 1], [1, 0]]  # electrical coupling
 
 # where to save results (root directory)
-SAVE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'VDOT_1D/')
+SAVE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'V_H_DOT_1D/')
 os.makedirs(SAVE_DIR, exist_ok=True)
 
 

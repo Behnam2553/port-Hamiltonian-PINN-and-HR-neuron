@@ -54,7 +54,7 @@ class HRNetworkErrorSystem:
         # Unpack current error state
         e_x, e_y, e_z, e_u, e_phi = current_error_state
 
-        # --- Complete Error System Derivatives ---
+        # --- Complete Error System Dynamics Derivatives ---
         de_xdt = ((((e_y - (params['a'] * ((e_x ** 3) + (3 * (e_x ** 2) * x1) + (3 * e_x * (x1 ** 2))))
                      + (params['b'] * ((e_x ** 2) + (2 * e_x * x1))) + (params['k'] * params['h'] * e_x))
                     + (params['k'] * params['f'] * ((x1 * (e_u ** 2)) + (2 * u1 * x1 * e_u) + (e_x * (e_u ** 2)) +
@@ -95,7 +95,7 @@ class HRNetworkErrorSystem:
         # Unpack current error state
         e_x, e_y, e_z, e_u, e_phi = current_error_state
 
-        # --- Simplified Error System Derivatives ---
+        # --- Simplified Error System Dynamics Derivatives ---
         de_xdt = (
                 (((-3 * params['a'] * (x1 ** 2)) + (2 * params['b'] * x1) + (params['k'] * params['h'])
                   + (params['k'] * params['f'] * (u1 ** 2)) + (params['rho'] * phi1) - (2 * params['ge'])) * e_x)
@@ -173,7 +173,7 @@ class HRNetworkErrorSystem:
         # --- Calculate HR Derivatives using the HindmarshRose instance ---
         hr_derivatives_flat = self.hr_network._ode_func_internal(t, current_hr_state)
 
-        # --- Calculate Error System Derivatives ---
+        # --- Calculate Error System Dynamics Derivatives ---
         error_derivatives = self._error_system_ode(t, current_error_state, current_hr_state)
 
         # --- Combine derivatives into a single vector ---

@@ -131,12 +131,12 @@ if __name__ == '__main__':
     sim_params['ge'] = 0.65
 
     import os
-    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'PINN/')
+    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'PINN Data/')
     os.makedirs(output_dir, exist_ok=True)
 
     output_file = os.path.join(output_dir, f'error_system_data.png')
     # Generate data for 5 runs
-    generate_data(num_runs=2,
+    generate_data(num_runs=10,
                   dynamics = 'complete',
                   param_dict = sim_params,
                   initial_state_range = (-2, 2),

@@ -5,14 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="329fa9e5-44a8-417a-9e59-78d39b36ad50" name="Changes" comment="...">
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/laboratory/generate_data_for_PINN.py" beforeDir="false" afterPath="$PROJECT_DIR$/laboratory/generate_data_for_PINN.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/laboratory/v_dot_parameter_sweep_1D.py" beforeDir="false" afterPath="$PROJECT_DIR$/laboratory/v_dot_parameter_sweep_1D.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/laboratory/v_dot_parameter_sweep_2D.py" beforeDir="false" afterPath="$PROJECT_DIR$/laboratory/v_dot_parameter_sweep_2D.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/project_map.txt" beforeDir="false" afterPath="$PROJECT_DIR$/project_map.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/sph_pinn/3Stage.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/src/sph_pinn/3Stage_phpinn.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/sph_pinn/Combined_State_Hamil.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/src/sph_pinn/pinn.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/sph_pinn/Combined_State_Hamil_JRH.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/src/sph_pinn/phpinn.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/sph_pinn/Combined_State_Hamil_JRH.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/sph_pinn/pH_PINN.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/sph_pinn/Combined_State_Hamiltonian.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/sph_pinn/test_gpu.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/sph_pinn/test_gpu.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/hr_model/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/hr_model/model.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/visualization/plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/plotting.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -52,37 +51,39 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.Combined_State_Hamil_JRH.executor": "Run",
-    "Python.bifurcation_analysis.executor": "Run",
-    "Python.extract_project.executor": "Run",
-    "Python.model.executor": "Run",
-    "Python.plot_bif_lya.executor": "Run",
-    "Python.plotting.executor": "Run",
-    "Python.test_gpu.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "WebServerToolWindowPanel.toolwindow.highlight.mappings": "true",
-    "WebServerToolWindowPanel.toolwindow.highlight.symlinks": "true",
-    "WebServerToolWindowPanel.toolwindow.show.date": "false",
-    "WebServerToolWindowPanel.toolwindow.show.permissions": "false",
-    "WebServerToolWindowPanel.toolwindow.show.size": "false",
-    "git-widget-placeholder": "master",
-    "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "C:/Users/behna/Pycharm Projects",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.Combined_State_Hamil_JRH.executor&quot;: &quot;Run&quot;,
+    &quot;Python.bifurcation_analysis.executor&quot;: &quot;Run&quot;,
+    &quot;Python.extract_project.executor&quot;: &quot;Run&quot;,
+    &quot;Python.generate_data_for_PINN.executor&quot;: &quot;Run&quot;,
+    &quot;Python.model.executor&quot;: &quot;Run&quot;,
+    &quot;Python.pH_PINN.executor&quot;: &quot;Run&quot;,
+    &quot;Python.plot_bif_lya.executor&quot;: &quot;Run&quot;,
+    &quot;Python.plotting.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_gpu.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.highlight.mappings&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.highlight.symlinks&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.date&quot;: &quot;false&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.permissions&quot;: &quot;false&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.size&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/behna/Pycharm Projects&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -105,7 +106,10 @@
       <workItem from="1756377800520" duration="2295000" />
       <workItem from="1756385632252" duration="1610000" />
       <workItem from="1756419527091" duration="3073000" />
-      <workItem from="1756422731219" duration="4118000" />
+      <workItem from="1756422731219" duration="5370000" />
+      <workItem from="1756428179108" duration="200000" />
+      <workItem from="1756462232228" duration="5051000" />
+      <workItem from="1756467367474" duration="1701000" />
     </task>
     <task id="LOCAL-00001" summary="initial commit">
       <option name="closed" value="true" />
@@ -147,7 +151,15 @@
       <option name="project" value="LOCAL" />
       <updated>1756421592613</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="...">
+      <option name="closed" value="true" />
+      <created>1756427371539</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1756427371539</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -173,12 +185,14 @@
     <option name="LAST_COMMIT_MESSAGE" value="..." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Thesis$model.coverage" NAME="model Coverage Results" MODIFIED="1756424948728" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/hr_model" />
+    <SUITE FILE_PATH="coverage/Thesis$model.coverage" NAME="model Coverage Results" MODIFIED="1756467615885" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/hr_model" />
     <SUITE FILE_PATH="coverage/Thesis$bifurcation_analysis.coverage" NAME="bifurcation_analysis Coverage Results" MODIFIED="1756332418364" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/laboratory" />
     <SUITE FILE_PATH="coverage/Thesis$Combined_State_Hamil_JRH.coverage" NAME="Combined_State_Hamil_JRH Coverage Results" MODIFIED="1756424302298" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/sph_pinn" />
     <SUITE FILE_PATH="coverage/Thesis$plot_bif_lya.coverage" NAME="plot_bif_lya Coverage Results" MODIFIED="1756333113255" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/visualization/literature plots" />
-    <SUITE FILE_PATH="coverage/Thesis$test_gpu.coverage" NAME="test_gpu Coverage Results" MODIFIED="1756424225461" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/sph_pinn" />
-    <SUITE FILE_PATH="coverage/Thesis$extract_project.coverage" NAME="extract_project Coverage Results" MODIFIED="1756426253763" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/utils" />
+    <SUITE FILE_PATH="coverage/Thesis$generate_data_for_PINN.coverage" NAME="generate_data_for_PINN Coverage Results" MODIFIED="1756462883516" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/laboratory" />
+    <SUITE FILE_PATH="coverage/Thesis$test_gpu.coverage" NAME="test_gpu Coverage Results" MODIFIED="1756462453304" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/sph_pinn" />
+    <SUITE FILE_PATH="coverage/Thesis$extract_project.coverage" NAME="extract_project Coverage Results" MODIFIED="1756463422047" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/utils" />
+    <SUITE FILE_PATH="coverage/Thesis$pH_PINN.coverage" NAME="pH_PINN Coverage Results" MODIFIED="1756427201387" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/sph_pinn" />
     <SUITE FILE_PATH="coverage/Thesis$plotting.coverage" NAME="plotting Coverage Results" MODIFIED="1756420073092" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/visualization" />
   </component>
 </project>
