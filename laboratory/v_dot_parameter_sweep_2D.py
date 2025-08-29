@@ -225,5 +225,5 @@ if __name__ == "__main__":
             mean_dhdt=mean_dHdt,
             param_x_name=PARAM_X,
             param_y_name=PARAM_Y,
-            save_path_prefix=None
+            save_fig=False
         )

@@ -62,7 +62,7 @@ results = simulator.get_results_dict(transient_ratio)
 # ======================================================================
 
 # --- Define the Directory ---
-output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Error System Dynamics Dynamics')
+output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Error System')
 os.makedirs(output_dir, exist_ok=True)
 print(f"Saving figures to '{output_dir}/'")
 

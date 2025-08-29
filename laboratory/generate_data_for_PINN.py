@@ -156,6 +156,6 @@ if __name__ == '__main__':
     titles = [r'$e_x$', r'$e_y$', r'$e_z$', r'$e_u$', r'$e_\phi$', r'$H$', r'$dH/dt$', r'$dV/dt$']
 
     # Use the imported plotting function to visualize the results
-    plot_pinn_data(all_results)
+    plot_pinn_data(all_results, save_fig=True)
 
     print(f"Generated 5 separate plots, each with 8 subplots, saved as 'run_<number>_plots.png'")

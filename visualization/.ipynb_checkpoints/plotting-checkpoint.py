@@ -49,7 +49,7 @@ def plot_all_time_series(results, N, title="Hindmarsh-Rose Neuron States"):
     plt.show(block=True)
 
 
-def plot_error_and_state_differences(results, title="Error System Dynamics and State Difference Dynamics"):
+def plot_error_and_state_differences(results, title="Error System and State Difference Dynamics"):
     """
     Plots both the error system states (e.g., e_x) and the direct state
     differences (e.g., x2-x1) on the same subplots for comparison.

@@ -214,6 +214,7 @@ if __name__ == "__main__":
             mean_dhdt=mean_dHdt,
             param_name=TARGET_PARAM,
             title=f"Mean Derivatives vs. Parameter '{TARGET_PARAM}'",
-            save_path=None
+            save_fig=False
         )
+
 

@@ -283,11 +283,8 @@ def calculate_dVdt(results, params):
 
 # --- Example Usage ---
 if __name__ == '__main__':
-    import matplotlib
-    matplotlib.use('Qt5Agg')
     from src.hr_model.error_system import HRNetworkErrorSystem
     from src.hr_model.model import DEFAULT_PARAMS
-    # --- Imports for Visualization ---
     from visualization.plotting import (
         plot_hamiltonian,
         plot_hamiltonian_derivative,
@@ -358,6 +355,7 @@ if __name__ == '__main__':
 
     # --- Plotting ---
     print("Generating plots...")
-    plot_hamiltonian(results['t'], H)
-    plot_hamiltonian_derivative(results['t'], dHdt)
-    plot_lyapunov_derivative(results['t'], dVdt)
+
+    plot_hamiltonian(results['t'], H, save_fig=1)
+    plot_hamiltonian_derivative(results['t'], dHdt, save_fig=1)
+    plot_lyapunov_derivative(results['t'], dVdt,  save_fig=1)

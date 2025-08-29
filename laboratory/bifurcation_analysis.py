@@ -127,26 +127,29 @@ def main():
         all_peak_values.extend(peaks)
 
     # --- Plotting ---
-    # from visualization.plotting import plot_bifurcation_diagram
+    from visualization.plotting import plot_bifurcation_diagram
 
-    # plot_bifurcation_diagram(
-    #     param_values=all_param_values,
-    #     peak_values=all_peak_values,
-    #     bifurcation_param_name=bifurcation_param_name,
-    #     title="Bifurcation Diagram",
-    #     ylabel=r'$x_{max}$',
-    #     s=2  # Marker size
-    # )
+    plot_bifurcation_diagram(
+        param_values=all_param_values,
+        peak_values=all_peak_values,
+        bifurcation_param_name=bifurcation_param_name,
+        title="Bifurcation Diagram",
+        xlabel=None,
+        ylabel=r'$x_{max}$',
+        marker='.',
+        s=2,
+        save_fig=1)
 
-    # --- Optional: Save Data ---
-    import os
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'Bifurcation/')
-    os.makedirs(path, exist_ok=True)
 
-    gen_data = np.vstack([all_param_values, all_peak_values]).T
-    np.save(
-        path + 'Bif_'+bifurcation_param_name+'_k_'+str(sim_params['k'])+'_m_'+str(sim_params['m']),
-        gen_data)
+    # # --- Optional: Save Data ---
+    # import os
+    # path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'Bifurcation/')
+    # os.makedirs(path, exist_ok=True)
+    #
+    # gen_data = np.vstack([all_param_values, all_peak_values]).T
+    # np.save(
+    #     path + 'Bif_'+bifurcation_param_name+'_k_'+str(sim_params['k'])+'_m_'+str(sim_params['m']),
+    #     gen_data)
 
 
 # This check is essential for multiprocessing to work correctly on all platforms

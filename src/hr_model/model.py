@@ -200,7 +200,7 @@ if __name__ == '__main__':
 
     results_single = hr_single.get_results_dict(transient_ratio)
 
-    plot_all_time_series(results_single, N=1, title="One Neuron Simulation", save_fig=False)
+    plot_all_time_series(results_single, N=1, title="One Neuron Simulation", save_fig=0)
 
     #=======================================================================================
     # --- Example 2: Two Coupled Neurons ---

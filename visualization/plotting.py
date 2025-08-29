@@ -40,7 +40,7 @@ def plot_all_time_series(results, N, title="Hindmarsh-Rose Neuron States", save_
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 
     if save_fig:
-        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'Neuron Dynamics')
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'temp')
         os.makedirs(output_dir, exist_ok=True)
         filename = title.replace(' ', '_').replace(':', '') + '.png'
         save_path = os.path.join(output_dir, filename)
@@ -51,7 +51,7 @@ def plot_all_time_series(results, N, title="Hindmarsh-Rose Neuron States", save_
         plt.show(block=True)
 
 
-def plot_error_and_state_differences(results, title="Error System Dynamics and State Difference Dynamics", save_fig=False):
+def plot_error_and_state_differences(results, title="Error System and State Difference Dynamics", save_fig=False):
     """
     Plots both the error system states (e.g., e_x) and the direct state
     differences (e.g., x2-x1) on the same subplots for comparison.
@@ -87,7 +87,7 @@ def plot_error_and_state_differences(results, title="Error System Dynamics and S
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 
     if save_fig:
-        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'Error System Dynamics Dynamics')
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'temp')
         os.makedirs(output_dir, exist_ok=True)
         filename = title.replace(' ', '_').replace(':', '') + '.png'
         save_path = os.path.join(output_dir, filename)
@@ -117,7 +117,7 @@ def plot_bifurcation_diagram(param_values, peak_values, bifurcation_param_name, 
     plt.grid(True, linestyle='--', alpha=0.6)
 
     if save_fig:
-        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'Bifurcation')
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'temp')
         os.makedirs(output_dir, exist_ok=True)
         filename = f"bifurcation_{bifurcation_param_name}.png"
         save_path = os.path.join(output_dir, filename)
@@ -139,7 +139,7 @@ def plot_hamiltonian(t, H, save_fig=False):
     plt.legend()
 
     if save_fig:
-        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'Hamiltonian')
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'temp')
         os.makedirs(output_dir, exist_ok=True)
         save_path = os.path.join(output_dir, 'hamiltonian_vs_time.png')
         plt.savefig(save_path, dpi=300)
@@ -160,7 +160,7 @@ def plot_hamiltonian_derivative(t, dHdt, save_fig=False):
     plt.legend()
 
     if save_fig:
-        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'Hamiltonian')
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'temp')
         os.makedirs(output_dir, exist_ok=True)
         save_path = os.path.join(output_dir, 'dHdt_vs_time.png')
         plt.savefig(save_path, dpi=300)
@@ -181,7 +181,7 @@ def plot_lyapunov_derivative(t, dVdt, save_fig=False):
     plt.legend()
 
     if save_fig:
-        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'Lyapanov 1D')
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'temp')
         os.makedirs(output_dir, exist_ok=True)
         save_path = os.path.join(output_dir, 'dVdt_vs_time.png')
         plt.savefig(save_path, dpi=300)
@@ -203,7 +203,7 @@ def plot_pinn_data(all_results, save_fig=False):
     titles = [r'$e_x$', r'$e_y$', r'$e_z$', r'$e_u$', r'$e_\phi$', r'$H$', r'$dH/dt$', r'$dV/dt$']
 
     if save_fig:
-        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'PINN Data')
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'temp')
         os.makedirs(output_dir, exist_ok=True)
 
     for run_idx, results in enumerate(all_results):
@@ -260,7 +260,7 @@ def plot_v_h_dot_1d(param_values, mean_dvdt, mean_dhdt, param_name, title, save_
     ax.margins(x=0)
 
     if save_fig:
-        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'V_H_DOT_1D')
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'temp')
         os.makedirs(output_dir, exist_ok=True)
         filename = f'v_h_dot_vs_{param_name}.png'
         save_path = os.path.join(output_dir, filename)
@@ -317,7 +317,7 @@ def plot_v_h_dot_2d(x_vals, y_vals, mean_dvdt, mean_dhdt, param_x_name, param_y_
     cbar2.set_label(r'$\langle dH/dt \rangle$', fontsize=14)
 
     if save_fig:
-        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'V_H_DOT_2D')
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'temp')
         os.makedirs(output_dir, exist_ok=True)
 
         dv_filename = f"v_dot_heatmap_{param_x_name}_vs_{param_y_name}.png"
