@@ -144,26 +144,29 @@ def main():
         all_peak_values.extend(peaks)
 
     # --- Plotting ---
-    # from visualization.plotting import plot_bifurcation_diagram
+    from visualization.plotting import plot_bifurcation_diagram
 
-    # plot_bifurcation_diagram(
-    #     param_values=all_param_values,
-    #     peak_values=all_peak_values,
-    #     bifurcation_param_name=bifurcation_param_name,
-    #     title="Bifurcation Diagram",
-    #     ylabel=r'$x_{max}$',
-    #     s=2  # Marker size
-    # )
+    plot_bifurcation_diagram(
+        param_values=all_param_values,
+        peak_values=all_peak_values,
+        bifurcation_param_name=bifurcation_param_name,
+        title="Bifurcation Diagram",
+        xlabel=None,
+        ylabel=r'$x_{max}$',
+        marker='.',
+        s=2,
+        save_fig=1)
 
-    # --- Optional: Save Data ---
-    import os
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'Bifurcation/')
-    os.makedirs(path, exist_ok=True)
 
-    gen_data = np.vstack([all_param_values, all_peak_values]).T
-    np.save(
-        path + 'Bif_'+bifurcation_param_name+'_k_'+str(sim_params['k'])+'_m_'+str(sim_params['m']),
-        gen_data)
+    # # --- Optional: Save Data ---
+    # import os
+    # path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'Bifurcation/')
+    # os.makedirs(path, exist_ok=True)
+    #
+    # gen_data = np.vstack([all_param_values, all_peak_values]).T
+    # np.save(
+    #     path + 'Bif_'+bifurcation_param_name+'_k_'+str(sim_params['k'])+'_m_'+str(sim_params['m']),
+    #     gen_data)
 
 
 # This check is essential for multiprocessing to work correctly on all platforms
@@ -310,18 +313,18 @@ if __name__ == '__main__':
     sim_params['ge'] = 0.65
 
     import os
-    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'PINN/')
+    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'PINN Data/')
     os.makedirs(output_dir, exist_ok=True)
 
-    output_file = os.path.join(output_dir, f'error_system_data.png')
+    output_file = os.path.join(output_dir, f'error_system_data.pkl')
     # Generate data for 5 runs
-    generate_data(num_runs=10,
+    generate_data(num_runs=1,
                   dynamics = 'complete',
                   param_dict = sim_params,
-                  initial_state_range = (-2, 2),
-                  end_time = 750,
-                  n_points = 750,
-                  seed=43,
+                  initial_state_range = (-1, 1),
+                  end_time = 500,
+                  n_points = 5000,
+                  seed=32,
                   output_file=output_file
                   )
 
@@ -335,7 +338,7 @@ if __name__ == '__main__':
     titles = [r'$e_x$', r'$e_y$', r'$e_z$', r'$e_u$', r'$e_\phi$', r'$H$', r'$dH/dt$', r'$dV/dt$']
 
     # Use the imported plotting function to visualize the results
-    plot_pinn_data(all_results)
+    plot_pinn_data(all_results, save_fig=True)
 
     print(f"Generated 5 separate plots, each with 8 subplots, saved as 'run_<number>_plots.png'")
 
@@ -422,7 +425,7 @@ I_EXT = [0.8, 0.8]  # external currents
 XI = [[0, 1], [1, 0]]  # electrical coupling
 
 # where to save results (root directory)
-SAVE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'VDOT_1D/')
+SAVE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'V_H_DOT_1D/')
 os.makedirs(SAVE_DIR, exist_ok=True)
 
 
@@ -578,8 +581,9 @@ if __name__ == "__main__":
             mean_dhdt=mean_dHdt,
             param_name=TARGET_PARAM,
             title=f"Mean Derivatives vs. Parameter '{TARGET_PARAM}'",
-            save_path=None
+            save_fig=False
         )
+
 
 
 ```
@@ -647,7 +651,7 @@ I_EXT = [0.8, 0.8]  # external currents
 XI = [[0, 1], [1, 0]]  # electrical coupling
 
 # where to save results (root directory)
-SAVE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'VDOT_2D/')
+SAVE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'V_H_DOT_2D/')
 os.makedirs(SAVE_DIR, exist_ok=True)
 
 # ───────────────────────────────────────────────────────────────────────
@@ -813,7 +817,7 @@ if __name__ == "__main__":
             mean_dhdt=mean_dHdt,
             param_x_name=PARAM_X,
             param_y_name=PARAM_Y,
-            save_path_prefix=None
+            save_fig=False
         )
 ```
 
@@ -828,16 +832,14 @@ if __name__ == "__main__":
 
 #### File: `plotting.py`
 ```python
-
-
+import os
 import numpy as np
-# # import matplotlib
-# # matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
+# import matplotlib
+# matplotlib.use('Qt5agg')
 
 
-
-def plot_all_time_series(results, N, title="Hindmarsh-Rose Neuron States"):
+def plot_all_time_series(results, N, title="Hindmarsh-Rose Neuron States", save_fig=False):
     """
     Plots the time series of all state variables for each neuron in a grid.
 
@@ -845,18 +847,16 @@ def plot_all_time_series(results, N, title="Hindmarsh-Rose Neuron States"):
         results (dict): The dictionary of simulation results from get_results_dict.
         N (int): The number of neurons in the simulation.
         title (str): The main title for the entire figure.
+        save_fig (bool): If True, saves the figure to a file. Otherwise, shows it interactively.
     """
     states = ['x', 'y', 'z', 'u', 'phi']
     state_labels = [r'$x$', r'$y$', r'$z$', r'$u$', r'$\phi$']
 
-    # Create a figure with 5 rows (for states) and N columns (for neurons)
-    # The squeeze=False argument ensures that 'axes' is always a 2D array,
-    # even if N=1, which simplifies indexing.
     fig, axes = plt.subplots(5, N, figsize=(4 * N, 10), sharex=True, squeeze=False, dpi=300)
     fig.suptitle(title, fontsize=16)
 
-    for i, (state_var, state_label) in enumerate(zip(states, state_labels)):  # Loop over states (rows)
-        for j in range(N):  # Loop over neurons (columns)
+    for i, (state_var, state_label) in enumerate(zip(states, state_labels)):
+        for j in range(N):
             ax = axes[i, j]
             data_key = f'{state_var}{j + 1}'
 
@@ -864,28 +864,35 @@ def plot_all_time_series(results, N, title="Hindmarsh-Rose Neuron States"):
                 ax.plot(results['t'], results[data_key])
                 ax.grid(True, linestyle='--', alpha=0.6)
 
-            # Set y-label for the first column
             if j == 0:
                 ax.set_ylabel(state_label, fontsize=14)
 
-            # Set title for the first row
             if i == 0:
                 ax.set_title(f'Neuron {j + 1}')
 
-    # Set common x-label
     plt.xlabel('Time', fontsize=14)
-    plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust layout to make room for suptitle
-    plt.show(block=True)
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+
+    if save_fig:
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'temp')
+        os.makedirs(output_dir, exist_ok=True)
+        filename = title.replace(' ', '_').replace(':', '') + '.png'
+        save_path = os.path.join(output_dir, filename)
+        plt.savefig(save_path, dpi=300)
+        plt.close(fig)
+        print(f"Figure saved to {save_path}")
+    else:
+        plt.show(block=True)
 
 
-def plot_error_and_state_differences(results, title="Error System and State Difference Dynamics"):
+def plot_error_and_state_differences(results, title="Error System and State Difference Dynamics", save_fig=False):
     """
     Plots both the error system states (e.g., e_x) and the direct state
     differences (e.g., x2-x1) on the same subplots for comparison.
-
     Args:
         results (dict): The dictionary of simulation results.
         title (str): The main title for the figure.
+        save_fig (bool): If True, saves the figure to a file. Otherwise, shows it interactively.
     """
     states = ['x', 'y', 'z', 'u', 'phi']
     error_labels = [r'$e_x$', r'$e_y$', r'$e_z$', r'$e_u$', r'$e_\phi$']
@@ -896,53 +903,44 @@ def plot_error_and_state_differences(results, title="Error System and State Diff
 
     for i, state_var in enumerate(states):
         ax = axes[i]
-
-        # Plot the error system state (e.g., e_x)
         error_key = f'e_{state_var}'
         if error_key in results:
             ax.plot(results['t'], results[error_key], label=error_labels[i])
 
-        # Plot the direct state difference (e.g., x2 - x1)
         key1 = f'{state_var}1'
         key2 = f'{state_var}2'
         if key1 in results and key2 in results:
             difference = results[key2] - results[key1]
             ax.plot(results['t'], difference, label=diff_labels[i], alpha=0.8)
 
-        # Set labels and legend for each subplot
         ax.set_ylabel(f"State '{state_var}'", fontsize=14)
         ax.grid(True, linestyle='--', alpha=0.6)
         ax.legend(loc='upper right')
 
     plt.xlabel('Time', fontsize=14)
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-    plt.show(block=True)
+
+    if save_fig:
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'temp')
+        os.makedirs(output_dir, exist_ok=True)
+        filename = title.replace(' ', '_').replace(':', '') + '.png'
+        save_path = os.path.join(output_dir, filename)
+        plt.savefig(save_path, dpi=300)
+        plt.close(fig)
+        print(f"Figure saved to {save_path}")
+    else:
+        plt.show(block=True)
 
 
-
-def plot_bifurcation_diagram(
-    param_values,
-    peak_values,
-    bifurcation_param_name,
-    title="Bifurcation Diagram",
-    xlabel=None,
-    ylabel=r'$x_{max}$', # Default ylabel for x peaks
-    marker='.',
-    s=1, # Marker size
-    save_path=None):
-
+def plot_bifurcation_diagram(param_values, peak_values, bifurcation_param_name, title="Bifurcation Diagram",
+                             xlabel=None, ylabel=r'$x_{max}$', marker='.', s=1, save_fig=False):
     """Plots a bifurcation diagram."""
 
     if xlabel is None:
-        # Use LaTeX representation if common greek letter, otherwise just the name
         greek_letters = {'rho': r'$\rho$', 'alpha': r'$\alpha$', 'beta': r'$\beta$', 'gamma': r'$\gamma$'}
         xlabel = greek_letters.get(bifurcation_param_name.lower(), bifurcation_param_name)
 
-
-    plt.figure(layout='tight') # Use tight layout
-
-    # Filter out NaN values for plotting if necessary, or let scatter handle them
-    # Scatter usually ignores NaN, which is often desired.
+    plt.figure(layout='tight')
     plt.scatter(param_values, peak_values, marker=marker, s=s, alpha=0.8)
 
     plt.xlabel(xlabel, fontsize=14)
@@ -952,17 +950,19 @@ def plot_bifurcation_diagram(
     plt.yticks(fontsize=12)
     plt.grid(True, linestyle='--', alpha=0.6)
 
-    if save_path:
-        try:
-            plt.savefig(save_path, dpi=300)
-            print(f"Figure saved to {save_path}")
-        except Exception as e:
-            print(f"Error saving figure: {e}")
+    if save_fig:
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'temp')
+        os.makedirs(output_dir, exist_ok=True)
+        filename = f"bifurcation_{bifurcation_param_name}.png"
+        save_path = os.path.join(output_dir, filename)
+        plt.savefig(save_path, dpi=300)
+        plt.close()
+        print(f"Figure saved to {save_path}")
     else:
         plt.show(block=True)
 
 
-def plot_hamiltonian(t, H):
+def plot_hamiltonian(t, H, save_fig=False):
     """Plots the Hamiltonian (H)"""
     plt.figure(figsize=(10, 6))
     plt.plot(t, H, label='Hamiltonian (H)')
@@ -971,9 +971,19 @@ def plot_hamiltonian(t, H):
     plt.title('Hamiltonian vs. Time')
     plt.grid(True)
     plt.legend()
-    plt.show(block=True)
 
-def plot_hamiltonian_derivative(t, dHdt):
+    if save_fig:
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'temp')
+        os.makedirs(output_dir, exist_ok=True)
+        save_path = os.path.join(output_dir, 'hamiltonian_vs_time.png')
+        plt.savefig(save_path, dpi=300)
+        plt.close()
+        print(f"Figure saved to {save_path}")
+    else:
+        plt.show(block=True)
+
+
+def plot_hamiltonian_derivative(t, dHdt, save_fig=False):
     """Plots the Hamiltonian derivative (dH/dt)"""
     plt.figure(figsize=(10, 6))
     plt.plot(t, dHdt, label='dH/dt', color='orange')
@@ -982,9 +992,19 @@ def plot_hamiltonian_derivative(t, dHdt):
     plt.title('Hamiltonian Derivative vs. Time')
     plt.grid(True)
     plt.legend()
-    plt.show(block=True)
 
-def plot_lyapunov_derivative(t, dVdt):
+    if save_fig:
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'temp')
+        os.makedirs(output_dir, exist_ok=True)
+        save_path = os.path.join(output_dir, 'dHdt_vs_time.png')
+        plt.savefig(save_path, dpi=300)
+        plt.close()
+        print(f"Figure saved to {save_path}")
+    else:
+        plt.show(block=True)
+
+
+def plot_lyapunov_derivative(t, dVdt, save_fig=False):
     """Plots the Lyapunov derivative (dV/dt)"""
     plt.figure(figsize=(10, 6))
     plt.plot(t, dVdt, label='dV/dt', color='green')
@@ -993,83 +1013,99 @@ def plot_lyapunov_derivative(t, dVdt):
     plt.title('Lyapunov Derivative vs. Time')
     plt.grid(True)
     plt.legend()
-    plt.show(block=True)
 
-def plot_pinn_data(all_results):
-    """
-    Plots the results from the data generation for the PINN.
-    Creates a separate figure for each simulation run, with subplots for key variables.
-
-    Args:
-        all_results (list): A list of result dictionaries, where each dictionary
-                            corresponds to a single simulation run.
-    """
-    # Define variables to plot and their corresponding LaTeX titles
-    variables_to_plot = ['e_x', 'e_y', 'e_z', 'e_u', 'e_phi', 'Hamiltonian', 'dHdt', 'dVdt']
-    titles = [r'$e_x$', r'$e_y$', r'$e_z$', r'$e_u$', r'$e_\phi$', r'$H$', r'$dH/dt$', r'$dV/dt$']
-
-    # Create a separate plot for each run in the results
-    for run_idx, results in enumerate(all_results):
-        t = results['t']
-        fig, axes = plt.subplots(4, 2, sharex=True)
-        fig.suptitle(f'Run {run_idx + 1}', fontsize=16)
-
-        # Plot each time series in its designated subplot
-        for ax, var, title in zip(axes.flat, variables_to_plot, titles):
-            ax.plot(t, results[var])
-            ax.set_xlabel('t')
-            ax.set_ylabel(var)
-            ax.grid(True)
-
-        plt.tight_layout()
+    if save_fig:
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'temp')
+        os.makedirs(output_dir, exist_ok=True)
+        save_path = os.path.join(output_dir, 'dVdt_vs_time.png')
+        plt.savefig(save_path, dpi=300)
+        plt.close()
+        print(f"Figure saved to {save_path}")
+    else:
         plt.show(block=True)
 
 
-def plot_v_h_dot_1d(param_values, mean_dvdt, mean_dhdt, param_name, title, save_path=None):
+def plot_pinn_data(all_results, save_fig=False):
     """
-    Plots the mean dV/dt and dH/dt against a single parameter in a combined figure.
+    Plots the results from the data generation for the PINN.
+    Creates a separate figure for each simulation run, with subplots for key variables.
+    Args:
+        all_results (list): A list of result dictionaries for each run.
+        save_fig (bool): If True, saves the figures to files. Otherwise, shows them interactively.
+    """
+    variables_to_plot = ['e_x', 'e_y', 'e_z', 'e_u', 'e_phi', 'Hamiltonian', 'dHdt', 'dVdt']
+    titles = [r'$e_x$', r'$e_y$', r'$e_z$', r'$e_u$', r'$e_\phi$', r'$H$', r'$dH/dt$', r'$dV/dt$']
 
+    if save_fig:
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'temp')
+        os.makedirs(output_dir, exist_ok=True)
+
+    for run_idx, results in enumerate(all_results):
+        t = results['t']
+        fig, axes = plt.subplots(4, 2, figsize=(12, 8), sharex=True)
+        fig.suptitle(f'Run {run_idx + 1}', fontsize=16)
+
+        for ax, var, title in zip(axes.flat, variables_to_plot, titles):
+            ax.plot(t, results[var])
+            ax.set_xlabel('t')
+            ax.set_ylabel(title)
+            ax.grid(True)
+
+        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+
+        if save_fig:
+            filename = f'pinn_data_run_{run_idx + 1}.png'
+            save_path = os.path.join(output_dir, filename)
+            plt.savefig(save_path, dpi=300)
+            plt.close(fig)
+        else:
+            plt.show(block=True)
+
+
+    if save_fig:
+        print(f"All PINN data plots saved to {output_dir}")
+
+
+def plot_v_h_dot_1d(param_values, mean_dvdt, mean_dhdt, param_name, title, save_fig=False):
+    """
+    Plots the mean dV/dt and dH/dt against a single parameter.
     Args:
         param_values (np.ndarray): The values of the swept parameter.
         mean_dvdt (np.ndarray): The corresponding mean dV/dt values.
         mean_dhdt (np.ndarray): The corresponding mean dH/dt values.
         param_name (str): The name of the parameter (e.g., 'k', 'rho').
         title (str): The title for the plot.
-        save_path (str, optional): Path to save the figure. If None, shows the plot.
+        save_fig (bool): If True, saves the figure to a file. Otherwise, shows it interactively.
     """
-    fig, ax = plt.subplots(
-        constrained_layout=True
-    )
+    fig, ax = plt.subplots(constrained_layout=True)
 
-    # Plot the two curves
     ax.plot(param_values, mean_dvdt, color="blue", label=r'$\langle dV/dt \rangle$', marker='.', linestyle='-')
     ax.plot(param_values, mean_dhdt, color="red", label=r'$\langle dH/dt \rangle$', marker='.', linestyle='-')
 
-    # Use LaTeX representation for common greek letters
     greek_letters = {'rho': r'$\rho$', 'alpha': r'$\alpha$', 'k': r'$k$'}
     xlabel = greek_letters.get(param_name.lower(), param_name)
 
-    # Set labels, title, grid, and legend
     ax.set_xlabel(xlabel, fontsize=18)
     ax.set_ylabel(r'Mean Value', fontsize=18)
     ax.set_title(title, fontsize=20)
     ax.grid(True)
     ax.legend(loc="best", fontsize=14)
-
-    # Enforce a square aspect ratio and remove horizontal margins
     ax.set_box_aspect(1.0)
     ax.margins(x=0)
 
-    # Save or show the plot
-    if save_path:
+    if save_fig:
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'temp')
+        os.makedirs(output_dir, exist_ok=True)
+        filename = f'v_h_dot_vs_{param_name}.png'
+        save_path = os.path.join(output_dir, filename)
         fig.savefig(save_path, dpi=300)
-        print(f"Plot saved to {save_path}")
         plt.close(fig)
+        print(f"Plot saved to {save_path}")
     else:
         plt.show(block=True)
 
 
-def plot_v_h_dot_2d(x_vals, y_vals, mean_dvdt, mean_dhdt, param_x_name, param_y_name, save_path_prefix=None):
+def plot_v_h_dot_2d(x_vals, y_vals, mean_dvdt, mean_dhdt, param_x_name, param_y_name, save_fig=False):
     """
     Plots 2D heatmaps for mean dV/dt and dH/dt from a parameter sweep.
     Generates and saves two separate figures.
@@ -1077,23 +1113,17 @@ def plot_v_h_dot_2d(x_vals, y_vals, mean_dvdt, mean_dhdt, param_x_name, param_y_
     Args:
         x_vals (np.ndarray): Array of values for the parameter on the y-axis.
         y_vals (np.ndarray): Array of values for the parameter on the x-axis.
-        mean_dvdt (np.ndarray): 2D array (shape Nx, Ny) of mean dV/dt values.
-        mean_dhdt (np.ndarray): 2D array (shape Nx, Ny) of mean dH/dt values.
+        mean_dvdt (np.ndarray): 2D array of mean dV/dt values.
+        mean_dhdt (np.ndarray): 2D array of mean dH/dt values.
         param_x_name (str): Name of the parameter for the y-axis.
         param_y_name (str): Name of the parameter for the x-axis.
-        save_path_prefix (str, optional): Base path for saving the plots.
-                                          If None, plots are shown interactively.
+        save_fig (bool): If True, saves the plots to files. Otherwise, shows them interactively.
     """
-    # --- Common Setup ---
-    # Create meshgrid. Note: The parameter for the plot's x-axis (PARAM_Y) comes first.
     Xg, Yg = np.meshgrid(y_vals, x_vals)
-
-    # Define LaTeX labels for better formatting
     greek_map = {'ge': r'$g_e$', 'rho': r'$\rho$', 'k': r'$k$', 'm': r'$m$'}
     xlabel = greek_map.get(param_y_name.lower(), param_y_name)
     ylabel = greek_map.get(param_x_name.lower(), param_x_name)
 
-    # Helper function to generate clean tick marks
     def five_ticks(grid):
         mn, mx = np.nanmin(grid), np.nanmax(grid)
         return np.round(np.linspace(mn, mx, 5), 2)
@@ -1104,10 +1134,8 @@ def plot_v_h_dot_2d(x_vals, y_vals, mean_dvdt, mean_dhdt, param_x_name, param_y_
     ax_dv.set_xlabel(xlabel, fontsize=14)
     ax_dv.set_ylabel(ylabel, fontsize=14)
     ax_dv.set_title(r"Mean $\langle dV/dt \rangle$ (post-transient)", fontsize=16)
-
     ax_dv.set_xticks(five_ticks(y_vals))
     ax_dv.set_yticks(five_ticks(x_vals))
-
     cbar1 = fig_dv.colorbar(pcm1, ax=ax_dv)
     cbar1.set_label(r'$\langle dV/dt \rangle$', fontsize=14)
 
@@ -1117,17 +1145,21 @@ def plot_v_h_dot_2d(x_vals, y_vals, mean_dvdt, mean_dhdt, param_x_name, param_y_
     ax_dh.set_xlabel(xlabel, fontsize=14)
     ax_dh.set_ylabel(ylabel, fontsize=14)
     ax_dh.set_title(r"Mean $\langle dH/dt \rangle$ (post-transient)", fontsize=16)
-
     ax_dh.set_xticks(five_ticks(y_vals))
     ax_dh.set_yticks(five_ticks(x_vals))
-
     cbar2 = fig_dh.colorbar(pcm2, ax=ax_dh)
     cbar2.set_label(r'$\langle dH/dt \rangle$', fontsize=14)
 
-    # --- Save or Show Plots ---
-    if save_path_prefix:
-        dv_save_path = f"{save_path_prefix}_dVdt.png"
-        dh_save_path = f"{save_path_prefix}_dHdt.png"
+    if save_fig:
+        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'temp')
+        os.makedirs(output_dir, exist_ok=True)
+
+        dv_filename = f"v_dot_heatmap_{param_x_name}_vs_{param_y_name}.png"
+        dh_filename = f"h_dot_heatmap_{param_x_name}_vs_{param_y_name}.png"
+
+        dv_save_path = os.path.join(output_dir, dv_filename)
+        dh_save_path = os.path.join(output_dir, dh_filename)
+
         fig_dv.savefig(dv_save_path, dpi=300)
         fig_dh.savefig(dh_save_path, dpi=300)
         print(f"Plots saved to {dv_save_path} and {dh_save_path}")
@@ -1974,137 +2006,6 @@ for file_name, save_name, x_name, y_name, title in zip(
     plt.close()
 ```
 
-#### File: `plot_single_neuron_states.py`
-```python
-# plot_single_neuron_states.py
-
-import os
-import matplotlib
-matplotlib.use('Qt5Agg')
-import matplotlib.pyplot as plt
-import diffrax as dfx
-from src.hr_model.model import HindmarshRose, DEFAULT_PARAMS, DEFAULT_STATE0
-
-# --- 1. SIMULATION SETUP ---
-
-print("Setting up and running single neuron simulation...")
-
-# Use a copy of the default parameters
-sim_params = DEFAULT_PARAMS.copy()
-
-# Create an instance of the Hindmarsh-Rose model for a single neuron (N=1)
-# We provide a constant external current and no coupling.
-hr_single_neuron = HindmarshRose(
-    N=1,
-    params=sim_params,
-    initial_state=DEFAULT_STATE0,
-    I_ext=0.8,
-    xi=0
-)
-
-# Define integration settings
-start_time = 0
-end_time = 2000
-dt_initial = 0.05
-n_points = 20000  # Number of data points to save
-max_steps = int((end_time - start_time) / dt_initial) * 20
-
-# Configure the numerical solver from the diffrax library
-solver = dfx.Tsit5()
-stepsize_controller = dfx.PIDController(rtol=1e-8, atol=1e-10)
-
-# --- 2. RUN SIMULATION ---
-
-# Execute the solver to integrate the neuron's dynamics over time
-hr_single_neuron.solve(
-    solver=solver,
-    t0=start_time,
-    t1=end_time,
-    dt0=dt_initial,
-    n_points=n_points,
-    stepsize_controller=stepsize_controller,
-    max_steps=max_steps
-)
-
-# Retrieve the simulation results as a dictionary
-# We set transient_ratio to 0.75 to discard the initial 75% of the data.
-results = hr_single_neuron.get_results_dict(transient_ratio=7/8)
-print("Simulation finished.")
-
-# --- 3. PLOTTING ---
-
-print("Generating and saving plots for each state variable...")
-
-# Define the properties for each state variable plot
-# This list contains (dict_key, LaTeX_label, plot_title, color)
-series_to_plot = [
-    ('x1', r'$x$', '(a)', 'darkblue'),
-    ('y1', r'$y$', '(b)', 'C2'),
-    ('z1', r'$z$', '(c)', 'C1'),
-    ('u1', r'$u$', '(d)', 'tomato'),
-    ('phi1', r'$\phi$', '(e)', 'purple'),
-]
-
-output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'Single Neuron')
-os.makedirs(output_dir, exist_ok=True)
-
-# Loop through each state variable to create and save its plot
-for key, label, title, color in series_to_plot:
-    # Create a new square figure with high resolution and tight layout
-    fig, ax = plt.subplots(
-        figsize=(4, 4),
-        dpi=200,
-        constrained_layout=True
-    )
-
-    # Plot the time series data for the current state variable
-    ax.plot(results['t'], results[key], c=color, linewidth=1.5)
-
-    # Set labels, title, and grid, matching the reference style
-    ax.set_xlabel(r'$t$', fontsize=18)
-    ax.set_ylabel(label, fontsize=18)
-    ax.set_title(title, fontsize=20)
-    ax.grid(True)
-
-    # Enforce a square aspect ratio for the plot area
-    ax.set_box_aspect(1.0)
-
-    # Remove the blank space (margins) at the start and end of the x-axis
-    ax.margins(x=0)
-
-    # --- Explicitly set x-axis ticks to include endpoints ---
-    time_data = results['t']
-    if time_data.size > 0:
-        # Get the start and end times from the post-transient data
-        t_min, t_max = time_data[0], time_data[-1]
-
-        # Get the automatically generated ticks as a starting point
-        current_ticks = ax.get_xticks()
-
-        # Create a new list for ticks, ensuring the first and last are included
-        new_ticks = [t_min]
-        # Add the existing ticks that are not too close to the endpoints
-        for tick in current_ticks:
-            if tick > t_min and tick < t_max:
-                new_ticks.append(tick)
-        new_ticks.append(t_max)
-
-        # Set the new ticks on the axis
-        ax.set_xticks(new_ticks)
-
-    # Define the file paths for both PNG and EPS formats
-    png_path = os.path.join(output_dir, f'{key}.png')
-    eps_path = os.path.join(output_dir, f'{key}.eps')
-    fig.savefig(png_path, format='png', dpi=200)
-    fig.savefig(eps_path, format='eps')
-
-    # Close the figure to free up memory before the next loop iteration
-    plt.close(fig)
-
-print("All plots have been saved to the current directory.")
-
-```
-
 #### File: `plot_v_h_dot_1D.py`
 ```python
 import matplotlib
@@ -2114,7 +2015,7 @@ import numpy as np
 import os
 
 # --- Define Directory ---
-path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'VDOT_1D/')
+path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'V_H_DOT_1D/')
 os.makedirs(path, exist_ok=True)
 
 file_name = 'V_H_DOT_k_-2.5_2.npz'
@@ -2185,7 +2086,7 @@ from pathlib import Path
 import os
 
 # ── Edit these two lines to your file location ─────────────────────────
-path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'VDOT_2D/')
+path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'V_H_DOT_2D/')
 os.makedirs(path, exist_ok=True)
 
 file_name = 'VDOT_ge_0-1_m_0-1.npz'
@@ -2280,8 +2181,6 @@ fig_dH.savefig(eps_dH_path, format='eps')
 
 #### File: `error_system.py`
 ```python
-# Error_System.py
-
 import numpy as np
 import jax, jax.numpy as jnp
 import diffrax as dfx
@@ -2764,6 +2663,7 @@ class HindmarshRose:
 # --- Example Usage ---
 if __name__ == '__main__':
     from visualization.plotting import plot_all_time_series
+    import os
 
     #=======================================================================================
     # --- Example 1: Single Neuron ---
@@ -2803,7 +2703,7 @@ if __name__ == '__main__':
 
     results_single = hr_single.get_results_dict(transient_ratio)
 
-    plot_all_time_series(results_single, N=1, title="One Neuron Simulation")
+    plot_all_time_series(results_single, N=1, title="One Neuron Simulation", save_fig=0)
 
     #=======================================================================================
     # --- Example 2: Two Coupled Neurons ---
@@ -2863,7 +2763,7 @@ if __name__ == '__main__':
 
     results_coupled = hr_coupled.get_results_dict(transient_ratio)
 
-    # plot_all_time_series(results_coupled, N=2, title="Two Coupled Neurons Simulation")
+    plot_all_time_series(results_coupled, N=2, title="Two Coupled Neurons Simulation", save_fig=False)
 ```
 
 #### File: `physics.py`
@@ -3153,11 +3053,8 @@ def calculate_dVdt(results, params):
 
 # --- Example Usage ---
 if __name__ == '__main__':
-    import matplotlib
-    matplotlib.use('Qt5Agg')
     from src.hr_model.error_system import HRNetworkErrorSystem
     from src.hr_model.model import DEFAULT_PARAMS
-    # --- Imports for Visualization ---
     from visualization.plotting import (
         plot_hamiltonian,
         plot_hamiltonian_derivative,
@@ -3228,9 +3125,10 @@ if __name__ == '__main__':
 
     # --- Plotting ---
     print("Generating plots...")
-    plot_hamiltonian(results['t'], H)
-    plot_hamiltonian_derivative(results['t'], dHdt)
-    plot_lyapunov_derivative(results['t'], dVdt)
+
+    plot_hamiltonian(results['t'], H, save_fig=1)
+    plot_hamiltonian_derivative(results['t'], dHdt, save_fig=1)
+    plot_lyapunov_derivative(results['t'], dVdt,  save_fig=1)
 ```
 
 ================================================================================
@@ -3244,8 +3142,331 @@ if __name__ == '__main__':
 - 3Stage_phpinn.ipynb
 - phpinn.ipynb
 - pinn.ipynb
+- test.ipynb
 
 ### Python Source Files:
+
+#### File: `optimize_hyperparams.py`
+```python
+"""
+optimize_hyperparams.py
+-----------------------
+This script uses the Optuna framework to perform an automated hyperparameter
+search for the Combined_sPHNN_PINN model defined in pH_PINN.py.
+
+It defines an "objective" function that Optuna repeatedly calls with different
+hyperparameter combinations. Each call (a "trial") trains the model for a
+fixed number of epochs and returns the best validation loss. Optuna uses
+these results to intelligently search for the optimal set of hyperparameters.
+
+Results of the study are saved to a SQLite database file (optimize_hyperparams.db)
+in the 'results/PINN Data/' directory, allowing the optimization to be paused
+and resumed.
+
+To run this script:
+1. Make sure you have Optuna and its storage dependencies installed:
+   pip install optuna
+   pip install "optuna[storages]"
+2. Place this file in the `src/sph_pinn/` directory.
+3. Run from the root directory of your project: python -m src.sph_pinn.optimize_hyperparams
+
+To view the results dashboard after running (run from project root):
+optuna-dashboard "sqlite:///results/PINN Data/optimize_hyperparams.db"
+"""
+import os
+import sys
+import jax
+import jax.numpy as jnp
+import equinox as eqx
+import optax
+import optuna
+
+# Ensure the script can find other modules in the project
+# This adds the project's root directory to the Python path.
+# Assumes the script is run from the root directory as recommended.
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
+# --- Import necessary components from your existing files ---
+from src.hr_model.model import DEFAULT_PARAMS
+from src.sph_pinn.pH_PINN import (
+    StateNN, HamiltonianNN, DissipationNN, DynamicJ_NN, # Import component networks
+    generate_data,
+    normalize,
+    denormalize,
+    train_step,
+    evaluate_model,
+)
+
+# JAX configuration
+jax.config.update("jax_enable_x64", True)
+
+# ==============================================================================
+# 1. LOCAL MODEL DEFINITION FOR HYPERPARAMETER FLEXIBILITY
+# ==============================================================================
+
+# We redefine the combined model here to easily pass architectural hyperparameters
+# from the Optuna trial into the sub-networks.
+class Combined_sPHNN_PINN(eqx.Module):
+    """Main model combining a unified state predictor and sPHNN structure."""
+    state_net: StateNN
+    hamiltonian_net: HamiltonianNN
+    dissipation_net: DissipationNN
+    j_net: DynamicJ_NN
+
+    def __init__(self, key, config):
+        state_key, h_key, d_key, j_key = jax.random.split(key, 4)
+        state_dim = config['state_dim']
+        x0_norm = jnp.zeros(state_dim)
+
+        # Use hyperparameters from config for all networks
+        self.state_net = StateNN(
+            key=state_key,
+            out_size=config['q_dim'] + state_dim,
+            width=config['state_width'],
+            depth=config['state_depth'],
+            mapping_size=config['mapping_size'],
+            scale=config['scale']
+        )
+        self.hamiltonian_net = HamiltonianNN(
+            h_key, in_size=state_dim, width=config['h_width'], depth=config['h_depth'],
+            x0=x0_norm, epsilon=config['h_epsilon']
+        )
+        self.dissipation_net = DissipationNN(
+            d_key, state_dim=state_dim, width=config['d_width'],
+            depth=config['d_depth'], activation=config['activation']
+        )
+        self.j_net = DynamicJ_NN(
+            j_key, state_dim=state_dim, width=config['j_width'],
+            depth=config['j_depth'], activation=config['activation']
+        )
+
+# ==============================================================================
+# 2. OBJECTIVE FUNCTION FOR OPTUNA
+# ==============================================================================
+
+def objective(trial, epochs_per_trial, static_data):
+    """
+    The main objective function that Optuna will minimize.
+
+    Args:
+        trial (optuna.Trial): An Optuna trial object used to suggest hyperparameters.
+        epochs_per_trial (int): The number of epochs to train for during each trial.
+        static_data (dict): A dictionary containing all pre-processed data and stats.
+
+    Returns:
+        float: The best validation loss achieved during the trial.
+    """
+    # --- 1. Suggest Hyperparameters from the Search Space ---
+    key = jax.random.PRNGKey(42)  # Use a fixed key for reproducibility across trials
+    model_key, _ = jax.random.split(key)
+
+    # StateNN Fourier Features
+
+    mapping_size = trial.suggest_int("mapping_size", 64, 512)
+    scale = trial.suggest_float("scale", 10, 1000, log=True)
+
+    # Network Architectures
+
+    state_width = trial.suggest_int("state_width", 64, 1024)
+    state_depth = trial.suggest_int("state_depth", 2, 6)
+    h_width = trial.suggest_int("h_width", 32, 512)
+    h_depth = trial.suggest_int("h_depth", 2, 6)
+    d_width = trial.suggest_int("d_width", 4, 64)
+    d_depth = trial.suggest_int("d_depth", 2, 6)
+    j_width = trial.suggest_int("j_width", 4, 64)
+    j_depth = trial.suggest_int("j_depth", 2, 6)
+    h_epsilon = trial.suggest_float("h_epsilon", 0.01, 5)
+
+    # Optimizer
+    lr_initial = trial.suggest_float("lr_initial", 1e-4, 1e-2, log=True)
+    decay_steps = trial.suggest_int("decay_steps", 100, 2000)
+
+    # Training and Loss
+    batch_size = trial.suggest_int("batch_size", 100, 4000)
+    lambda_conservative_max = trial.suggest_float("lambda_conservative_max", 0.1, 10, log=True)
+    lambda_dissipative_max = trial.suggest_float("lambda_dissipative_max", 0.1, 10, log=True)
+    lambda_physics_max = trial.suggest_float("lambda_physics_max", 0.1, 10, log=True)
+    lambda_warmup_epochs = trial.suggest_int("lambda_warmup_epochs", 500, 2000)
+
+
+    # --- 2. Build Model and Optimizer with Suggested Values ---
+    nn_config = {
+        "state_dim": static_data['s_dim'],
+        "q_dim": static_data['q_dim'],
+        "state_width": state_width, "state_depth": state_depth,
+        "mapping_size": mapping_size, "scale": scale,
+        "h_width": h_width, "h_depth": h_depth, "h_epsilon": h_epsilon,
+        "d_width": d_width, "d_depth": d_depth,
+        "j_width": j_width, "j_depth": j_depth,
+        "activation": jax.nn.softplus,
+    }
+    model = Combined_sPHNN_PINN(key=model_key, config=nn_config)
+
+    lr_schedule = optax.linear_schedule(
+        init_value=lr_initial, end_value=1e-5, transition_steps=decay_steps
+    )
+    optimizer = optax.adamw(learning_rate=lr_schedule)
+    opt_state = optimizer.init(eqx.filter(model, eqx.is_array))
+
+    # --- 3. Run the Training and Validation Loop ---
+    best_hamiltonian_loss = jnp.inf
+    num_batches = static_data['t_train_norm'].shape[0] // batch_size
+    if num_batches == 0:
+        num_batches = 1
+
+    for epoch in range(epochs_per_trial):
+        warmup_factor = jnp.minimum(1.0, (epoch + 1) / lambda_warmup_epochs)
+        current_lambda_conservative = lambda_conservative_max * warmup_factor
+        current_lambda_dissipative = lambda_dissipative_max * warmup_factor
+        current_lambda_physics = lambda_physics_max * warmup_factor
+
+        key, shuffle_key = jax.random.split(key)
+        perm = jax.random.permutation(shuffle_key, static_data['t_train_norm'].shape[0])
+        t_shuffled, s_shuffled, q_shuffled, s_dot_shuffled, H_shuffled = (
+            static_data['t_train_norm'][perm], static_data['s_train_norm'][perm],
+            static_data['q_train_norm'][perm], static_data['s_dot_train_norm'][perm],
+            static_data['H_train_norm'][perm]
+        )
+
+        for i in range(num_batches):
+            start, end = i * batch_size, (i + 1) * batch_size
+            t_b, s_b, q_b, s_dot_b, H_b = (
+                t_shuffled[start:end], s_shuffled[start:end], q_shuffled[start:end],
+                s_dot_shuffled[start:end], H_shuffled[start:end]
+            )
+            model, opt_state, _, _ = train_step(
+                model, opt_state, optimizer, t_b, s_b, q_b, s_dot_b, H_b,
+                current_lambda_conservative, current_lambda_dissipative, current_lambda_physics,
+                static_data['hr_params'], static_data['t_mean'], static_data['t_std'],
+                static_data['s_mean'], static_data['s_std'], static_data['q_mean'],
+                static_data['q_std'], static_data['s_dot_mean'], static_data['s_dot_std'],
+                static_data['H_mean'], static_data['H_std']
+            )
+
+        # --- Custom Evaluation for Hamiltonian Loss ---
+        all_states_pred_norm = jax.vmap(model.state_net)(static_data['t_val_norm'])
+        s_pred_norm = all_states_pred_norm[:, 10:]
+        H_pred_norm = jax.vmap(model.hamiltonian_net)(s_pred_norm)
+        H_true_norm = static_data['H_val_norm']
+        H_pred = denormalize(H_pred_norm, static_data['H_mean'], static_data['H_std'])
+        H_true = denormalize(H_true_norm, static_data['H_mean'], static_data['H_std'])
+
+        def safe_corrcoef(x, y):
+            x_flat, y_flat = jnp.ravel(x), jnp.ravel(y)
+            finite_mask = jnp.isfinite(x_flat) & jnp.isfinite(y_flat)
+            x_finite, y_finite = x_flat[finite_mask], y_flat[finite_mask]
+            if x_finite.size < 2 or jnp.all(x_finite == x_finite[0]) or jnp.all(y_finite == y_finite[0]):
+                return 0.0
+            return jnp.corrcoef(x_finite, y_finite)[0, 1]
+
+        correlation = safe_corrcoef(H_true, H_pred)
+        sign = jnp.where(jnp.sign(correlation) == 0, 1.0, jnp.sign(correlation))
+        H_pred_aligned = sign * H_pred - jnp.mean(sign * H_pred) + jnp.mean(H_true)
+        current_hamiltonian_loss = jnp.mean((H_pred_aligned - H_true) ** 2)
+
+        if current_hamiltonian_loss < best_hamiltonian_loss:
+            best_hamiltonian_loss = current_hamiltonian_loss
+
+    # --- 4. Return the Final Metric to Optuna ---
+    return best_hamiltonian_loss
+
+
+# ==============================================================================
+# 3. MAIN EXECUTION BLOCK
+# ==============================================================================
+
+if __name__ == "__main__":
+    # --- 1. Load and Prepare Data (Done Once) ---
+    print("Loading and preparing data for optimization...")
+    data_path = os.path.join(os.path.dirname(__file__), '..', '..', 'results', 'PINN Data', 'error_system_data.pkl')
+    t, s, q, s_dot_true, H_analytical = generate_data(data_path)
+    if t is None:
+        sys.exit("Exiting: Data loading failed. Make sure 'error_system_data.pkl' exists.")
+
+    validation_split = 0.2
+    num_samples = s.shape[0]
+    key = jax.random.PRNGKey(123)
+    perm = jax.random.permutation(key, num_samples)
+    t_shuffled, s_shuffled, q_shuffled, s_dot_shuffled, H_shuffled = \
+        t[perm], s[perm], q[perm], s_dot_true[perm], H_analytical[perm]
+    t_shuffled = t_shuffled.reshape(-1, 1)
+
+    split_idx = int(num_samples * (1 - validation_split))
+    t_train, t_val = jnp.split(t_shuffled, [split_idx])
+    s_train, s_val = jnp.split(s_shuffled, [split_idx])
+    q_train, q_val = jnp.split(q_shuffled, [split_idx])
+    s_dot_train, s_dot_val = jnp.split(s_dot_shuffled, [split_idx])
+    H_train, H_val = jnp.split(H_shuffled, [split_idx])
+
+    # --- Normalize Data ---
+    t_mean, t_std = jnp.mean(t_train), jnp.std(t_train)
+    s_mean, s_std = jnp.mean(s_train, axis=0), jnp.std(s_train, axis=0)
+    q_mean, q_std = jnp.mean(q_train, axis=0), jnp.std(q_train, axis=0)
+    s_dot_mean, s_dot_std = jnp.mean(s_dot_train, axis=0), jnp.std(s_dot_train, axis=0)
+    H_mean, H_std = jnp.mean(H_train), jnp.std(H_train)
+
+    static_data = {
+        's_dim': s_train.shape[1], 'q_dim': q_train.shape[1],
+        'hr_params': DEFAULT_PARAMS.copy(),
+        't_train_norm': normalize(t_train, t_mean, t_std),
+        's_train_norm': normalize(s_train, s_mean, s_std),
+        'q_train_norm': normalize(q_train, q_mean, q_std),
+        's_dot_train_norm': normalize(s_dot_train, s_dot_mean, s_dot_std),
+        'H_train_norm': normalize(H_train, H_mean, H_std),
+        't_val_norm': normalize(t_val, t_mean, t_std),
+        's_val_norm': normalize(s_val, s_mean, s_std),
+        'q_val_norm': normalize(q_val, q_mean, q_std),
+        's_dot_val_norm': normalize(s_dot_val, s_dot_mean, s_dot_std),
+        'H_val_norm': normalize(H_val, H_mean, H_std),
+        't_mean': t_mean, 't_std': t_std, 's_mean': s_mean, 's_std': s_std,
+        'q_mean': q_mean, 'q_std': q_std, 's_dot_mean': s_dot_mean, 's_dot_std': s_dot_std,
+        'H_mean': H_mean, 'H_std': H_std,
+    }
+
+    # --- 2. Create and Run the Optuna Study ---
+    print("\nStarting Optuna hyperparameter search...")
+
+    # ==================== MODIFIED CODE FOR CUSTOM SAVE DIRECTORY ==============
+    # Define the storage directory and ensure it exists
+    results_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'PINN Data')
+    os.makedirs(results_dir, exist_ok=True)
+
+    # Define the full path for the database file
+    db_name = os.path.basename(__file__).replace('.py', '.db') # e.g., 'optimize_hyperparams.db'
+    db_path = os.path.join(results_dir, db_name)
+
+    # Create the storage name for Optuna, which is a URI
+    storage_name = f"sqlite:///{db_path}"
+    study_name = "sphnn_pinn_optimization_study" # A unique name for the study
+    # ===========================================================================
+
+    objective_with_args = lambda trial: objective(trial, epochs_per_trial=500, static_data=static_data)
+
+    # ==================== MODIFIED LINE ========================================
+    # This now uses the storage and resuming capability.
+    study = optuna.create_study(
+        study_name=study_name,
+        storage=storage_name,
+        direction="minimize",
+        load_if_exists=True  # This is key for resuming the study
+    )
+    # ===========================================================================
+
+    study.optimize(objective_with_args, n_trials=5)
+
+    # --- 3. Print the Results ---
+    print("\nOptimization finished.")
+    print(f"Study results are saved in: {storage_name}")
+    print("Number of finished trials: ", len(study.trials))
+    print("Best trial:")
+    best = study.best_trial
+    print(f"  Value (Best Hamiltonian Loss): {best.value:.6f}")
+    print("  Best Hyperparameters: ")
+    for key, value in best.params.items():
+        print(f"    {key}: {value}")
+
+
+```
 
 #### File: `pH_PINN.py`
 ```python
@@ -3308,7 +3529,7 @@ class StateNN(eqx.Module):
     """An MLP with Fourier Features to approximate the combined state [q(t), s(t)]."""
     layers: list
 
-    def __init__(self, key, out_size=15, width=256, depth=3, mapping_size=32, scale=300):
+    def __init__(self, key, out_size=15, width=256, depth=4, mapping_size=256, scale=173.58):
         fourier_key, *layer_keys = jax.random.split(key, depth + 1)
         self.layers = [
             FourierFeatures(fourier_key, in_size=1, mapping_size=mapping_size, scale=scale),
@@ -3473,36 +3694,149 @@ class Combined_sPHNN_PINN(eqx.Module):
 # 2. DATA HANDLING
 # ==============================================================================
 
-def generate_data(file_path="data_for_PIN.pkl"):
-    """Loads and prepares training data from a pre-generated pickle file."""
+
+# def generate_data(file_path="data_for_PIN.pkl"):
+#     """Loads and prepares training data from a pre-generated pickle file."""
+#     print(f"Loading simulation data from {file_path}...")
+#     try:
+#         with open(file_path, 'rb') as f:
+#             results = pickle.load(f)
+#     except FileNotFoundError:
+#         print(f"Error: Data file not found at {file_path}")
+#         print("Please ensure 'data_for_PIN.pkl' is in the same directory.")
+#         return None, None, None, None, None
+#
+#     t = jnp.asarray(results['t'])
+#     s = jnp.vstack([
+#         results['e_x'], results['e_y'], results['e_z'],
+#         results['e_u'], results['e_phi']
+#     ]).T
+#     q = jnp.vstack([
+#         results['x1'], results['y1'], results['z1'], results['u1'], results['phi1'],
+#         results['x2'], results['y2'], results['z2'], results['u2'], results['phi2']
+#     ]).T
+#     s_dot_true = jnp.vstack([
+#         results['d_e_x'], results['d_e_y'], results['d_e_z'],
+#         results['d_e_u'], results['d_e_phi']
+#     ]).T
+#     # Load the analytical Hamiltonian
+#     H_analytical = jnp.asarray(results['Hamiltonian'])
+#
+#     print("Data loading complete.")
+#     return t, s, q, s_dot_true, H_analytical
+
+#
+# def generate_data(file_path="error_system_data.pkl"):
+#     """
+#     Loads and prepares training data from a pre-generated pickle file containing
+#     multiple simulation runs.
+#     """
+#     print(f"Loading simulation data from {file_path}...")
+#     try:
+#         with open(file_path, 'rb') as f:
+#             # The file contains a list of result dictionaries
+#             all_runs_results = pickle.load(f)
+#     except FileNotFoundError:
+#         print(f"Error: Data file not found at {file_path}")
+#         print("Please run 'generate_data_for_PINN.py' to create the data file.")
+#         return None, None, None, None, None
+#
+#     # Initialize lists to hold data from all runs
+#     all_t, all_s, all_q, all_s_dot, all_H = [], [], [], [], []
+#
+#     # Process each simulation run
+#     for i, results in enumerate(all_runs_results):
+#         print(f"  ... processing run {i + 1}/{len(all_runs_results)}")
+#
+#         # Extract data for the current run
+#         t = jnp.asarray(results['t'])
+#         s = jnp.vstack([
+#             results['e_x'], results['e_y'], results['e_z'],
+#             results['e_u'], results['e_phi']
+#         ]).T
+#         q = jnp.vstack([
+#             results['x1'], results['y1'], results['z1'], results['u1'], results['phi1'],
+#             results['x2'], results['y2'], results['z2'], results['u2'], results['phi2']
+#         ]).T
+#         s_dot_true = jnp.vstack([
+#             results['d_e_x'], results['d_e_y'], results['d_e_z'],
+#             results['d_e_u'], results['d_e_phi']
+#         ]).T
+#         H_analytical = jnp.asarray(results['Hamiltonian'])
+#
+#         # Append to the main lists
+#         all_t.append(t)
+#         all_s.append(s)
+#         all_q.append(q)
+#         all_s_dot.append(s_dot_true)
+#         all_H.append(H_analytical)
+#
+#     # Concatenate all runs into single arrays
+#     final_t = jnp.concatenate(all_t)
+#     final_s = jnp.concatenate(all_s)
+#     final_q = jnp.concatenate(all_q)
+#     final_s_dot = jnp.concatenate(all_s_dot)
+#     final_H = jnp.concatenate(all_H)
+#
+#     print("Data loading and aggregation complete.")
+#     return final_t, final_s, final_q, final_s_dot, final_H
+
+def generate_data(file_path="error_system_data.pkl"):
+    """
+    Loads and prepares training data from a pre-generated pickle file containing
+    multiple simulation runs.
+    """
     print(f"Loading simulation data from {file_path}...")
     try:
         with open(file_path, 'rb') as f:
-            results = pickle.load(f)
+            all_runs_results = pickle.load(f)
     except FileNotFoundError:
         print(f"Error: Data file not found at {file_path}")
-        print("Please ensure 'data_for_PIN.pkl' is in the same directory.")
+        print("Please run 'generate_data_for_PINN.py' to create the data file.")
         return None, None, None, None, None
 
-    t = jnp.asarray(results['t'])
-    s = jnp.vstack([
-        results['e_x'], results['e_y'], results['e_z'],
-        results['e_u'], results['e_phi']
-    ]).T
-    q = jnp.vstack([
-        results['x1'], results['y1'], results['z1'], results['u1'], results['phi1'],
-        results['x2'], results['y2'], results['z2'], results['u2'], results['phi2']
-    ]).T
-    s_dot_true = jnp.vstack([
-        results['d_e_x'], results['d_e_y'], results['d_e_z'],
-        results['d_e_u'], results['d_e_phi']
-    ]).T
-    # Load the analytical Hamiltonian
-    H_analytical = jnp.asarray(results['Hamiltonian'])
+    all_t, all_s, all_q, all_s_dot, all_H = [], [], [], [], []
+    time_offset = 0.0  # Initialize the time offset
 
-    print("Data loading complete.")
-    return t, s, q, s_dot_true, H_analytical
+    for i, results in enumerate(all_runs_results):
+        print(f"  ... processing run {i + 1}/{len(all_runs_results)}")
 
+        t = jnp.asarray(results['t'])
+        s = jnp.vstack([
+            results['e_x'], results['e_y'], results['e_z'],
+            results['e_u'], results['e_phi']
+        ]).T
+        q = jnp.vstack([
+            results['x1'], results['y1'], results['z1'], results['u1'], results['phi1'],
+            results['x2'], results['y2'], results['z2'], results['u2'], results['phi2']
+        ]).T
+        s_dot_true = jnp.vstack([
+            results['d_e_x'], results['d_e_y'], results['d_e_z'],
+            results['d_e_u'], results['d_e_phi']
+        ]).T
+        H_analytical = jnp.asarray(results['Hamiltonian'])
+
+        # Append data, adding the current offset to the time vector
+        all_t.append(t + time_offset)
+        all_s.append(s)
+        all_q.append(q)
+        all_s_dot.append(s_dot_true)
+        all_H.append(H_analytical)
+
+        # Update the offset for the next run to ensure continuity
+        if t.size > 0:
+            # Add the duration of the current run to the offset
+            time_offset += (t[-1] - t[0])
+
+    # Concatenate all runs into single arrays
+    final_t = jnp.concatenate(all_t)
+    final_s = jnp.concatenate(all_s)
+    final_q = jnp.concatenate(all_q)
+    final_s_dot = jnp.concatenate(all_s_dot)
+    final_H = jnp.concatenate(all_H)
+
+    print("Data loading and aggregation complete.")
+    return final_t, final_s, final_q, final_s_dot, final_H
 
 def normalize(data, mean, std):
     """Normalizes data using pre-computed statistics."""
@@ -3697,295 +4031,335 @@ def evaluate_model(model, t_batch_norm, s_batch_norm, q_batch_norm, s_dot_batch_
     )
     return loss_val
 
+
 # ==============================================================================
 # 4. MAIN EXECUTION LOGIC
 # ==============================================================================
+def main():
+    """Main function to run the training and evaluation."""
+    # --- Setup and Hyperparameters ---
+    key = jax.random.PRNGKey(42)
+    model_key, data_key = jax.random.split(key)
 
-"""Main function to run the training and evaluation."""
-# --- Setup and Hyperparameters ---
-key = jax.random.PRNGKey(42)
-model_key, data_key = jax.random.split(key)
+    # Training hyperparameters
+    # batch_size = 1000
+    # validation_split = 0.2
+    # initial_learning_rate = 1e-3
+    # end_learning_rate = 5e-5
+    # decay_steps = 3000
+    # epochs = 1000
 
-# Training hyperparameters
-batch_size = 8000
-validation_split = 0.2
-initial_learning_rate = 1e-3
-end_learning_rate = 5e-5
-decay_steps = 3000
-epochs = 5
+    batch_size = 2000
+    validation_split = 0.2
+    initial_learning_rate = 0.007745659946217974
+    end_learning_rate = 5e-5
+    decay_steps = 538
+    epochs = 5000
 
-# Physics loss hyperparameters with warmup
-lambda_conservative_max = 1
-lambda_dissipative_max = 5
-lambda_physics_max = 15
-lambda_warmup_epochs = 2000
+    # Physics loss hyperparameters with warmup
+    lambda_conservative_max = 0.6168109547521601
+    lambda_dissipative_max = 0.8980172562119398
+    lambda_physics_max = 2.0105956760770627
+    lambda_warmup_epochs = 848
 
-# System parameters
-hr_params = DEFAULT_PARAMS.copy()
+    # System parameters
+    hr_params = DEFAULT_PARAMS.copy()
 
-# --- Generate and Prepare Data ---
-import os
-path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results/', 'data_for_PIN.pkl')
-t, s, q, s_dot_true, H_analytical = generate_data(path)
-if t is None:
-    sys.exit("Exiting: Data loading failed.")
+    # --- Generate and Prepare Data ---
+    import os
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'PINN Data/', 'error_system_data.pkl')
+    t, s, q, s_dot_true, H_analytical = generate_data(path)
+    if t is None:
+        sys.exit("Exiting: Data loading failed.")
 
-num_samples = s.shape[0]
-perm = jax.random.permutation(data_key, num_samples)
-t_shuffled, s_shuffled, q_shuffled, s_dot_shuffled, H_shuffled = t[perm], s[perm], q[perm], s_dot_true[perm], H_analytical[perm]
-t_shuffled = t_shuffled.reshape(-1, 1)
+    num_samples = s.shape[0]
+    perm = jax.random.permutation(data_key, num_samples)
+    t_shuffled, s_shuffled, q_shuffled, s_dot_shuffled, H_shuffled = t[perm], s[perm], q[perm], s_dot_true[perm], H_analytical[perm]
+    t_shuffled = t_shuffled.reshape(-1, 1)
 
-split_idx = int(num_samples * (1 - validation_split))
-t_train, t_val = jnp.split(t_shuffled, [split_idx])
-s_train, s_val = jnp.split(s_shuffled, [split_idx])
-q_train, q_val = jnp.split(q_shuffled, [split_idx])
-s_dot_train, s_dot_val = jnp.split(s_dot_shuffled, [split_idx])
-H_train, H_val = jnp.split(H_shuffled, [split_idx])
+    split_idx = int(num_samples * (1 - validation_split))
+    t_train, t_val = jnp.split(t_shuffled, [split_idx])
+    s_train, s_val = jnp.split(s_shuffled, [split_idx])
+    q_train, q_val = jnp.split(q_shuffled, [split_idx])
+    s_dot_train, s_dot_val = jnp.split(s_dot_shuffled, [split_idx])
+    H_train, H_val = jnp.split(H_shuffled, [split_idx])
 
-# --- Normalize Data (using ONLY training set statistics) ---
-t_mean, t_std = jnp.mean(t_train), jnp.std(t_train)
-s_mean, s_std = jnp.mean(s_train, axis=0), jnp.std(s_train, axis=0)
-q_mean, q_std = jnp.mean(q_train, axis=0), jnp.std(q_train, axis=0)
-s_dot_mean, s_dot_std = jnp.mean(s_dot_train, axis=0), jnp.std(s_dot_train, axis=0)
-H_mean, H_std = jnp.mean(H_train), jnp.std(H_train)
+    # --- Normalize Data (using ONLY training set statistics) ---
+    t_mean, t_std = jnp.mean(t_train), jnp.std(t_train)
+    s_mean, s_std = jnp.mean(s_train, axis=0), jnp.std(s_train, axis=0)
+    q_mean, q_std = jnp.mean(q_train, axis=0), jnp.std(q_train, axis=0)
+    s_dot_mean, s_dot_std = jnp.mean(s_dot_train, axis=0), jnp.std(s_dot_train, axis=0)
+    H_mean, H_std = jnp.mean(H_train), jnp.std(H_train)
 
-t_train_norm = normalize(t_train, t_mean, t_std)
-s_train_norm = normalize(s_train, s_mean, s_std)
-q_train_norm = normalize(q_train, q_mean, q_std)
-s_dot_train_norm = normalize(s_dot_train, s_dot_mean, s_dot_std)
-H_train_norm = normalize(H_train, H_mean, H_std)
+    t_train_norm = normalize(t_train, t_mean, t_std)
+    s_train_norm = normalize(s_train, s_mean, s_std)
+    q_train_norm = normalize(q_train, q_mean, q_std)
+    s_dot_train_norm = normalize(s_dot_train, s_dot_mean, s_dot_std)
+    H_train_norm = normalize(H_train, H_mean, H_std)
 
-t_val_norm = normalize(t_val, t_mean, t_std)
-s_val_norm = normalize(s_val, s_mean, s_std)
-q_val_norm = normalize(q_val, q_mean, q_std)
-s_dot_val_norm = normalize(s_dot_val, s_dot_mean, s_dot_std)
-H_val_norm = normalize(H_val, H_mean, H_std)
+    t_val_norm = normalize(t_val, t_mean, t_std)
+    s_val_norm = normalize(s_val, s_mean, s_std)
+    q_val_norm = normalize(q_val, q_mean, q_std)
+    s_dot_val_norm = normalize(s_dot_val, s_dot_mean, s_dot_std)
+    H_val_norm = normalize(H_val, H_mean, H_std)
 
-# --- Centralized Neural Network Configuration ---
-s_dim = s_train.shape[1]
-q_dim = q_train.shape[1]
-nn_config = {
-    "state_dim": s_dim, 
-    "h_width": 128, "h_depth": 3, "h_epsilon": 0.525,
-    "d_width": 2, "d_depth": 3, "j_width": 2, "j_depth": 3,
-    "activation": jax.nn.softplus,
-}
+    # --- Centralized Neural Network Configuration ---
+    s_dim = s_train.shape[1]
+    q_dim = q_train.shape[1]
+    nn_config = {
+        "state_dim": s_dim,
+        "h_width": 128, "h_depth": 4, "h_epsilon": 1.20,
+        "d_width": 8, "d_depth": 3,
+        "j_width": 64, "j_depth": 3,
+        "activation": jax.nn.softplus,
+    }
 
-# Initialize the combined model
-model = Combined_sPHNN_PINN(key=model_key, config=nn_config)
+    # Initialize the combined model
+    model = Combined_sPHNN_PINN(key=model_key, config=nn_config)
 
-# --- Training Loop ---
-lr_schedule = optax.linear_schedule(
-    init_value=initial_learning_rate,
-    end_value=end_learning_rate,
-    transition_steps=decay_steps
-)
-optimizer = optax.adamw(learning_rate=lr_schedule)
-opt_state = optimizer.init(eqx.filter(model, eqx.is_array))
+    # --- Training Loop ---
+    lr_schedule = optax.linear_schedule(
+        init_value=initial_learning_rate,
+        end_value=end_learning_rate,
+        transition_steps=decay_steps
+    )
+    optimizer = optax.adamw(learning_rate=lr_schedule)
+    opt_state = optimizer.init(eqx.filter(model, eqx.is_array))
 
-train_losses, val_losses = [], []
-phys_losses, conservative_losses, dissipative_losses, hamiltonian_losses = [], [], [], []
-best_model, best_val_loss = model, jnp.inf
+    train_losses, val_losses = [], []
+    phys_losses, conservative_losses, dissipative_losses, hamiltonian_losses = [], [], [], []
+    best_model, best_val_loss = model, jnp.inf
 
-num_batches = t_train_norm.shape[0] // batch_size
-if num_batches == 0 and t_train_norm.shape[0] > 0:
-    print(f"Warning: batch_size ({batch_size}) > num samples. Setting num_batches to 1.")
-    num_batches = 1
+    num_batches = t_train_norm.shape[0] // batch_size
+    if num_batches == 0 and t_train_norm.shape[0] > 0:
+        print(f"Warning: batch_size ({batch_size}) > num samples. Setting num_batches to 1.")
+        num_batches = 1
 
-print(f"Starting training for {epochs} epochs...")
-for epoch in range(epochs):
-    # Loss weight warmup schedule
-    warmup_factor = jnp.minimum(1.0, (epoch + 1) / lambda_warmup_epochs)
-    current_lambda_conservative = lambda_conservative_max * warmup_factor
-    current_lambda_dissipative = lambda_dissipative_max * warmup_factor
-    current_lambda_physics = lambda_physics_max * warmup_factor
+    print(f"Starting training for {epochs} epochs...")
+    for epoch in range(epochs):
+        # Loss weight warmup schedule
+        warmup_factor = jnp.minimum(1.0, (epoch + 1) / lambda_warmup_epochs)
+        current_lambda_conservative = lambda_conservative_max * warmup_factor
+        current_lambda_dissipative = lambda_dissipative_max * warmup_factor
+        current_lambda_physics = lambda_physics_max * warmup_factor
 
-    key, shuffle_key = jax.random.split(key)
-    perm = jax.random.permutation(shuffle_key, t_train_norm.shape[0])
-    t_shuffled = t_train_norm[perm]
-    s_shuffled = s_train_norm[perm]
-    q_shuffled = q_train_norm[perm]
-    s_dot_shuffled = s_dot_train_norm[perm]
-    H_shuffled = H_train_norm[perm]
+        key, shuffle_key = jax.random.split(key)
+        perm = jax.random.permutation(shuffle_key, t_train_norm.shape[0])
+        t_shuffled = t_train_norm[perm]
+        s_shuffled = s_train_norm[perm]
+        q_shuffled = q_train_norm[perm]
+        s_dot_shuffled = s_dot_train_norm[perm]
+        H_shuffled = H_train_norm[perm]
 
-    # Initialize epoch loss accumulators
-    epoch_losses = {k: 0.0 for k in ["total", "data_unified", "phys", "conservative", "dissipative", "hamiltonian"]}
-    
-    for i in range(num_batches):
-        start, end = i * batch_size, (i + 1) * batch_size
-        t_b, s_b, q_b, s_dot_b, H_b = t_shuffled[start:end], s_shuffled[start:end], q_shuffled[start:end], s_dot_shuffled[start:end], H_shuffled[start:end]
+        # Initialize epoch loss accumulators
+        epoch_losses = {k: 0.0 for k in ["total", "data_unified", "phys", "conservative", "dissipative", "hamiltonian"]}
 
-        model, opt_state, train_loss_val, loss_comps = train_step(
-            model, opt_state, optimizer, t_b, s_b, q_b, s_dot_b, H_b,
+        for i in range(num_batches):
+            start, end = i * batch_size, (i + 1) * batch_size
+            t_b, s_b, q_b, s_dot_b, H_b = t_shuffled[start:end], s_shuffled[start:end], q_shuffled[start:end], s_dot_shuffled[start:end], H_shuffled[start:end]
+
+            model, opt_state, train_loss_val, loss_comps = train_step(
+                model, opt_state, optimizer, t_b, s_b, q_b, s_dot_b, H_b,
+                current_lambda_conservative, current_lambda_dissipative, current_lambda_physics, hr_params,
+                t_mean, t_std, s_mean, s_std, q_mean, q_std, s_dot_mean, s_dot_std, H_mean, H_std
+            )
+            for k in epoch_losses:
+                if k in loss_comps:
+                    epoch_losses[k] += loss_comps[k]
+
+        # Calculate average losses for the epoch
+        avg_losses = {k: v / num_batches for k, v in epoch_losses.items()}
+
+        val_loss = evaluate_model(
+            model, t_val_norm, s_val_norm, q_val_norm, s_dot_val_norm, H_val_norm,
             current_lambda_conservative, current_lambda_dissipative, current_lambda_physics, hr_params,
             t_mean, t_std, s_mean, s_std, q_mean, q_std, s_dot_mean, s_dot_std, H_mean, H_std
         )
-        for k in epoch_losses:
-            if k in loss_comps:
-                epoch_losses[k] += loss_comps[k]
 
-    # Calculate average losses for the epoch
-    avg_losses = {k: v / num_batches for k, v in epoch_losses.items()}
+        train_losses.append(avg_losses["total"])
+        val_losses.append(val_loss)
+        phys_losses.append(avg_losses["phys"])
+        conservative_losses.append(avg_losses["conservative"])
+        dissipative_losses.append(avg_losses["dissipative"])
+        hamiltonian_losses.append(avg_losses["hamiltonian"])
 
-    val_loss = evaluate_model(
-        model, t_val_norm, s_val_norm, q_val_norm, s_dot_val_norm, H_val_norm,
-        current_lambda_conservative, current_lambda_dissipative, current_lambda_physics, hr_params,
-        t_mean, t_std, s_mean, s_std, q_mean, q_std, s_dot_mean, s_dot_std, H_mean, H_std
-    )
-    
-    train_losses.append(avg_losses["total"])
-    val_losses.append(val_loss)
-    phys_losses.append(avg_losses["phys"])
-    conservative_losses.append(avg_losses["conservative"])
-    dissipative_losses.append(avg_losses["dissipative"])
-    hamiltonian_losses.append(avg_losses["hamiltonian"])
+        '''if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            best_model = model'''
+        best_model = model
 
-    '''if val_loss < best_val_loss:
-        best_val_loss = val_loss
-        best_model = model'''
-    best_model = model
-
-    if (epoch + 1) % 100 == 0 or epoch == 0:
-        log_str = (
-            f"Epoch {epoch+1}/{epochs} | Train Loss: {avg_losses['total']:.4f} | Val Loss: {val_loss:.4f} | "
-            f"Data: {avg_losses['data_unified']:.4f} | "
-            f"Phys: {avg_losses['phys']:.4f} | "
-            f"Cons: {avg_losses['conservative']:.4f} | Diss: {avg_losses['dissipative']:.4f} | "
-            f"H_Loss: {avg_losses['hamiltonian']:.4f}"
-        )
-        print(log_str)
+        if (epoch + 1) % 100 == 0 or epoch == 0:
+            log_str = (
+                f"Epoch {epoch+1}/{epochs} | Train Loss: {avg_losses['total']:.4f} | Val Loss: {val_loss:.4f} | "
+                f"Data: {avg_losses['data_unified']:.4f} | "
+                f"Phys: {avg_losses['phys']:.4f} | "
+                f"Cons: {avg_losses['conservative']:.4f} | Diss: {avg_losses['dissipative']:.4f} | "
+                f"H_Loss: {avg_losses['hamiltonian']:.4f}"
+            )
+            print(log_str)
 
 
-print("Training finished.")
-print(f"Best validation loss achieved: {best_val_loss:.6f}")
+    print("Training finished.")
+    print(f"Best validation loss achieved: {best_val_loss:.6f}")
 
-#%%
-# ==============================================================================
-# 5. VISUALIZATION AND ANALYSIS
-# ==============================================================================
+    #%%
+    # ==============================================================================
+    # 5. VISUALIZATION AND ANALYSIS
+    # ==============================================================================
 
-output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'PINN/')
-os.makedirs(output_dir, exist_ok=True)
+    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'temp/')
+    os.makedirs(output_dir, exist_ok=True)
 
-print("\nGenerating visualization plots...")
-# Use the full, unsplit, time-ordered data for coherent plots
-t_test = t.reshape(-1, 1)
-s_test, q_test, s_dot_test, H_analytical_vis = s, q, s_dot_true, H_analytical
-t_test_norm = normalize(t_test, t_mean, t_std)
+    run_to_visualize_idx = 0 # <-- CHOOSE WHICH SIMULATION RUN TO PLOT
 
-# --- Get all model predictions for the full dataset ---
-all_states_pred_norm = jax.vmap(best_model.state_net)(t_test_norm)
-q_pred_norm = all_states_pred_norm[:, :10]
-s_pred_norm = all_states_pred_norm[:, 10:]
+    print(f"\nGenerating visualization plots for simulation run #{run_to_visualize_idx + 1}...")
 
-s_pred = denormalize(s_pred_norm, s_mean, s_std)
-q_pred = denormalize(q_pred_norm, q_mean, q_std)
+    # Load the data again to isolate a single run for clean plotting
+    with open(path, 'rb') as f:
+        all_runs = pickle.load(f)
 
-# --- Calculate all derivatives for comparison ---
-grad_H_norm = jax.vmap(jax.grad(best_model.hamiltonian_net))(s_pred_norm)
-J_norm = jax.vmap(best_model.j_net)(s_pred_norm)
-R_norm = jax.vmap(best_model.dissipation_net)(s_pred_norm)
-s_dot_from_structure_norm = jax.vmap(lambda j, r, g: (j - r) @ g)(J_norm, R_norm, grad_H_norm)
-s_dot_from_structure = s_dot_from_structure_norm * s_std
+    # Ensure the chosen index is valid
+    if run_to_visualize_idx >= len(all_runs):
+        print(f"Error: 'run_to_visualize_idx' ({run_to_visualize_idx}) is out of bounds. Max is {len(all_runs)-1}. Setting to 0.")
+        run_to_visualize_idx = 0
 
-f_c_batch_vis = jax.vmap(f_c_fn, in_axes=(0, 0, None))(s_pred, q_pred, hr_params)
-f_d_batch_vis = jax.vmap(f_d_fn, in_axes=(0, 0, None))(s_pred, q_pred, hr_params)
-s_dot_from_equations = f_c_batch_vis + f_d_batch_vis
+    vis_results = all_runs[run_to_visualize_idx]
 
-# Need to compute autodiff for the s-slice of the StateNN's output
-get_s_slice_autodiff_grad = lambda net, t: jax.jvp(lambda t_scalar: net(t_scalar)[10:], (t,), (jnp.ones_like(t),))[1]
-s_dot_autodiff_norm = jax.vmap(get_s_slice_autodiff_grad, in_axes=(None, 0))(best_model.state_net, t_test_norm)
-s_dot_autodiff = s_dot_autodiff_norm * (s_std / (t_std + 1e-8))
+    # Use the selected run's data for all subsequent plotting
+    t_test = jnp.asarray(vis_results['t']).reshape(-1, 1)
+    s_test = jnp.vstack([
+        vis_results['e_x'], vis_results['e_y'], vis_results['e_z'],
+        vis_results['e_u'], vis_results['e_phi']
+    ]).T
+    q_test = jnp.vstack([
+        vis_results['x1'], vis_results['y1'], vis_results['z1'], vis_results['u1'], vis_results['phi1'],
+        vis_results['x2'], vis_results['y2'], vis_results['z2'], vis_results['u2'], vis_results['phi2']
+    ]).T
+    s_dot_test = jnp.vstack([
+        vis_results['d_e_x'], vis_results['d_e_y'], vis_results['d_e_z'],
+        vis_results['d_e_u'], vis_results['d_e_phi']
+    ]).T
+    H_analytical_vis = jnp.asarray(vis_results['Hamiltonian'])
+
+    # Normalize the visualization data using the previously computed training statistics
+    t_test_norm = normalize(t_test, t_mean, t_std)
+
+    # --- Get all model predictions for the full dataset ---
+    all_states_pred_norm = jax.vmap(best_model.state_net)(t_test_norm)
+    q_pred_norm = all_states_pred_norm[:, :10]
+    s_pred_norm = all_states_pred_norm[:, 10:]
+
+    s_pred = denormalize(s_pred_norm, s_mean, s_std)
+    q_pred = denormalize(q_pred_norm, q_mean, q_std)
+
+    # --- Calculate all derivatives for comparison ---
+    grad_H_norm = jax.vmap(jax.grad(best_model.hamiltonian_net))(s_pred_norm)
+    J_norm = jax.vmap(best_model.j_net)(s_pred_norm)
+    R_norm = jax.vmap(best_model.dissipation_net)(s_pred_norm)
+    s_dot_from_structure_norm = jax.vmap(lambda j, r, g: (j - r) @ g)(J_norm, R_norm, grad_H_norm)
+    s_dot_from_structure = s_dot_from_structure_norm * s_std
+
+    f_c_batch_vis = jax.vmap(f_c_fn, in_axes=(0, 0, None))(s_pred, q_pred, hr_params)
+    f_d_batch_vis = jax.vmap(f_d_fn, in_axes=(0, 0, None))(s_pred, q_pred, hr_params)
+    s_dot_from_equations = f_c_batch_vis + f_d_batch_vis
+
+    # Need to compute autodiff for the s-slice of the StateNN's output
+    get_s_slice_autodiff_grad = lambda net, t: jax.jvp(lambda t_scalar: net(t_scalar)[10:], (t,), (jnp.ones_like(t),))[1]
+    s_dot_autodiff_norm = jax.vmap(get_s_slice_autodiff_grad, in_axes=(None, 0))(best_model.state_net, t_test_norm)
+    s_dot_autodiff = s_dot_autodiff_norm * (s_std / (t_std + 1e-8))
 
 
-# --- Plot 1: Learned vs Analytical Hamiltonian ---
-print("Comparing learned Hamiltonian with analytical solution...")
-H_learned_norm = jax.vmap(best_model.hamiltonian_net)(s_pred_norm)
-H_learned_flipped = (-1) * H_learned_norm
-H_learned_aligned = H_learned_flipped - jnp.mean(H_learned_flipped) + jnp.mean(H_analytical_vis)
+    # --- Plot 1: Learned vs Analytical Hamiltonian ---
+    print("Comparing learned Hamiltonian with analytical solution...")
+    H_learned_norm = jax.vmap(best_model.hamiltonian_net)(s_pred_norm)
+    H_learned_flipped = (-1) * H_learned_norm
+    H_learned_aligned = H_learned_flipped - jnp.mean(H_learned_flipped) + jnp.mean(H_analytical_vis)
 
-plt.figure(figsize=(12, 7))
-plt.plot(t_test[:1500], H_analytical_vis[:1500], label='Analytical Hamiltonian', color='blue')
-plt.plot(t_test[:1500], H_learned_aligned[:1500], label='Learned Hamiltonian (Aligned)', color='red')
-plt.title("Time Evolution of Hamiltonians", fontsize=16)
-plt.xlabel("Time", fontsize=14)
-plt.ylabel("Hamiltonian Value", fontsize=14)
-plt.legend(fontsize=12)
-plt.grid(True)
-plt.savefig(os.path.join(output_dir, 'hamiltonian_comparison.png'), dpi=300)
-plt.tight_layout()
+    plt.figure(figsize=(12, 7))
+    plt.plot(t_test[:1500], H_analytical_vis[:1500], label='Analytical Hamiltonian', color='blue')
+    plt.plot(t_test[:1500], H_learned_aligned[:1500], label='Learned Hamiltonian (Aligned)', color='red')
+    plt.title("Time Evolution of Hamiltonians", fontsize=16)
+    plt.xlabel("Time", fontsize=14)
+    plt.ylabel("Hamiltonian Value", fontsize=14)
+    plt.legend(fontsize=12)
+    plt.grid(True)
+    plt.savefig(os.path.join(output_dir, 'hamiltonian_comparison.png'), dpi=300)
+    plt.tight_layout()
 
 
-# --- Plot 2: Training, Validation, and Physics Losses ---
-plt.figure(figsize=(12, 7))
-plt.plot(train_losses, label='Total Training Loss')
-plt.plot(val_losses, label='Total Validation Loss')
-plt.plot(hamiltonian_losses, label='Hamiltonian Loss', color='red')
-plt.plot(phys_losses, label='Physics Loss', color='purple')
-plt.plot(conservative_losses, label='Conservative Loss', alpha=0.7)
-plt.plot(dissipative_losses, label='Dissipative Loss', alpha=0.7)
-plt.yscale('log')
-plt.title('Training, Validation, and Physics Losses Over Epochs', fontsize=16)
-plt.xlabel('Epoch', fontsize=12)
-plt.ylabel('Loss (Log Scale)', fontsize=12)
-plt.legend()
-plt.grid(True, which="both", ls="--")
-plt.savefig(os.path.join(output_dir, 'training_losses.png'), dpi=300)
-plt.tight_layout()
+    # --- Plot 2: Training, Validation, and Physics Losses ---
+    plt.figure(figsize=(12, 7))
+    plt.plot(train_losses, label='Total Training Loss')
+    plt.plot(val_losses, label='Total Validation Loss')
+    plt.plot(hamiltonian_losses, label='Hamiltonian Loss', color='red')
+    plt.plot(phys_losses, label='Physics Loss', color='purple')
+    plt.plot(conservative_losses, label='Conservative Loss', alpha=0.7)
+    plt.plot(dissipative_losses, label='Dissipative Loss', alpha=0.7)
+    plt.yscale('log')
+    plt.title('Training, Validation, and Physics Losses Over Epochs', fontsize=16)
+    plt.xlabel('Epoch', fontsize=12)
+    plt.ylabel('Loss (Log Scale)', fontsize=12)
+    plt.legend()
+    plt.grid(True, which="both", ls="--")
+    plt.savefig(os.path.join(output_dir, 'training_losses.png'), dpi=300)
+    plt.tight_layout()
 
-# --- Plot 3: Derivative Comparison (Physics Fidelity) ---
-fig, axes = plt.subplots(s_test.shape[1], 1, figsize=(12, 12), sharex=True)
-state_labels_s_dot = [r'$\dot{e}_x$', r'$\dot{e}_y$', r'$\dot{e}_z$', r'$\dot{e}_u$', r'$\dot{e}_\phi$']
-fig.suptitle("Derivative Fidelity Comparison", fontsize=18, y=0.99)
+    # --- Plot 3: Derivative Comparison (Physics Fidelity) ---
+    fig, axes = plt.subplots(s_test.shape[1], 1, figsize=(12, 12), sharex=True)
+    state_labels_s_dot = [r'$\dot{e}_x$', r'$\dot{e}_y$', r'$\dot{e}_z$', r'$\dot{e}_u$', r'$\dot{e}_\phi$']
+    fig.suptitle("Derivative Fidelity Comparison", fontsize=18, y=0.99)
 
-for i in range(s_test.shape[1]):
-    axes[i].plot(t_test[:1500], s_dot_test[:1500, i], label='True Derivative', color='green', linewidth=3, alpha=0.8)
-    axes[i].plot(t_test[:1500], s_dot_from_structure[:1500, i], label='sPHNN Structure', color='red')
-    axes[i].plot(t_test[:1500], s_dot_from_equations[:1500, i], label='Analytical Eq. (f_c+f_d)', color='purple')
-    axes[i].plot(t_test[:1500], s_dot_autodiff[:1500, i], label='Autodiff', color='orange')
+    for i in range(s_test.shape[1]):
+        axes[i].plot(t_test[:1500], s_dot_test[:1500, i], label='True Derivative', color='green', linewidth=3, alpha=0.8)
+        axes[i].plot(t_test[:1500], s_dot_from_structure[:1500, i], label='sPHNN Structure', color='red')
+        axes[i].plot(t_test[:1500], s_dot_from_equations[:1500, i], label='Analytical Eq. (f_c+f_d)', color='purple')
+        axes[i].plot(t_test[:1500], s_dot_autodiff[:1500, i], label='Autodiff', color='orange')
 
-    axes[i].set_ylabel(state_labels_s_dot[i], fontsize=14)
-    axes[i].grid(True)
-    axes[i].legend(loc='upper right')
+        axes[i].set_ylabel(state_labels_s_dot[i], fontsize=14)
+        axes[i].grid(True)
+        axes[i].legend(loc='upper right')
 
-axes[-1].set_xlabel("Time", fontsize=14)
-fig.savefig(os.path.join(output_dir, 'derivative_fidelity.png'), dpi=300)
-plt.tight_layout(rect=[0, 0, 1, 0.97])
+    axes[-1].set_xlabel("Time", fontsize=14)
+    fig.savefig(os.path.join(output_dir, 'derivative_fidelity.png'), dpi=300)
+    plt.tight_layout(rect=[0, 0, 1, 0.97])
 
-# --- Plot 4: Error System State Trajectories (s) ---
-fig, axes = plt.subplots(s_test.shape[1], 1, figsize=(12, 10), sharex=True)
-state_labels_error = [r'$e_x$', r'$e_y$', r'$e_z$', r'$e_u$', r'$e_\phi$']
-fig.suptitle("Error System State 's' Prediction: True vs. Predicted", fontsize=18, y=0.99)
-for i in range(s_test.shape[1]):
-    axes[i].plot(t_test[:1500], s_test[:1500, i], 'b', label='True State', alpha=0.9)
-    axes[i].plot(t_test[:1500], s_pred[:1500, i], 'r', label='Predicted State')
-    axes[i].set_ylabel(state_labels_error[i], fontsize=14)
-    axes[i].grid(True)
-    axes[i].legend(loc='upper right')
-axes[-1].set_xlabel("Time", fontsize=14)
-fig.savefig(os.path.join(output_dir, 'error_state_s_prediction.png'), dpi=300)
-plt.tight_layout(rect=[0, 0, 1, 0.97])
+    # --- Plot 4: Error System State Trajectories (s) ---
+    fig, axes = plt.subplots(s_test.shape[1], 1, figsize=(12, 10), sharex=True)
+    state_labels_error = [r'$e_x$', r'$e_y$', r'$e_z$', r'$e_u$', r'$e_\phi$']
+    fig.suptitle("Error System State 's' Prediction: True vs. Predicted", fontsize=18, y=0.99)
+    for i in range(s_test.shape[1]):
+        axes[i].plot(t_test[:1500], s_test[:1500, i], 'b', label='True State', alpha=0.9)
+        axes[i].plot(t_test[:1500], s_pred[:1500, i], 'r', label='Predicted State')
+        axes[i].set_ylabel(state_labels_error[i], fontsize=14)
+        axes[i].grid(True)
+        axes[i].legend(loc='upper right')
+    axes[-1].set_xlabel("Time", fontsize=14)
+    fig.savefig(os.path.join(output_dir, 'error_state_s_prediction.png'), dpi=300)
+    plt.tight_layout(rect=[0, 0, 1, 0.97])
 
-# --- Plot 5: HR System State Trajectories (q) ---
-fig, axes = plt.subplots(q_test.shape[1], 1, figsize=(12, 18), sharex=True)
-state_labels_q = [
-    r'$x_1$', r'$y_1$', r'$z_1$', r'$u_1$', r'$\phi_1$',
-    r'$x_2$', r'$y_2$', r'$z_2$', r'$u_2$', r'$\phi_2$'
-]
-fig.suptitle("HR System State 'q' Prediction: True vs. Predicted", fontsize=18, y=0.99)
-for i in range(q_test.shape[1]):
-    axes[i].plot(t_test[:1500], q_test[:1500, i], 'b', label='True State', alpha=0.9)
-    axes[i].plot(t_test[:1500], q_pred[:1500, i], 'r', label='Predicted State')
-    axes[i].set_ylabel(state_labels_q[i], fontsize=14)
-    axes[i].grid(True)
-    axes[i].legend(loc='upper right')
-axes[-1].set_xlabel("Time", fontsize=14)
-fig.savefig(os.path.join(output_dir, 'hr_state_q_prediction.png'), dpi=300)
-plt.tight_layout(rect=[0, 0, 1, 0.97])
+    # --- Plot 5: HR System State Trajectories (q) ---
+    fig, axes = plt.subplots(q_test.shape[1], 1, figsize=(12, 18), sharex=True)
+    state_labels_q = [
+        r'$x_1$', r'$y_1$', r'$z_1$', r'$u_1$', r'$\phi_1$',
+        r'$x_2$', r'$y_2$', r'$z_2$', r'$u_2$', r'$\phi_2$'
+    ]
+    fig.suptitle("HR System State 'q' Prediction: True vs. Predicted", fontsize=18, y=0.99)
+    for i in range(q_test.shape[1]):
+        axes[i].plot(t_test[:1500], q_test[:1500, i], 'b', label='True State', alpha=0.9)
+        axes[i].plot(t_test[:1500], q_pred[:1500, i], 'r', label='Predicted State')
+        axes[i].set_ylabel(state_labels_q[i], fontsize=14)
+        axes[i].grid(True)
+        axes[i].legend(loc='upper right')
+    axes[-1].set_xlabel("Time", fontsize=14)
+    fig.savefig(os.path.join(output_dir, 'hr_state_q_prediction.png'), dpi=300)
+    plt.tight_layout(rect=[0, 0, 1, 0.97])
 
-plt.close('all')
-print(f"All plots saved to {output_dir}")
+    plt.close('all')
+    print(f"All plots saved to {output_dir}")
 
+
+if __name__ == "__main__":
+    main()
 ```
 
 #### File: `test_gpu.py`
@@ -4009,6 +4383,9 @@ for device in jax.devices():
 ================================================================================
 ## Folder: src/sph_pinn/.ipynb_checkpoints
 ------------------------------------------------------------
+### Other Files:
+- test-checkpoint.ipynb
+
 ### Python Source Files:
 
 #### File: `test_gpu-checkpoint.py`

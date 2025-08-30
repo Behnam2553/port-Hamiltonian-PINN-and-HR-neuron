@@ -42,9 +42,11 @@ jax.config.update("jax_enable_x64", True)
 class FourierFeatures(eqx.Module):
     """Encodes a 1D input into a higher-dimensional space using Fourier features."""
     b_matrix: jax.Array
-
+    output_size: int = eqx.field(static=True)
     def __init__(self, key, in_size=1, mapping_size=32, scale=1):
-        self.b_matrix = jax.random.normal(key, (mapping_size // 2, in_size)) * scale
+        n_pairs = mapping_size // 2
+        self.b_matrix = jax.random.normal(key, (n_pairs, in_size)) * scale
+        self.output_size = n_pairs * 2
 
     def __call__(self, t):
         if t.ndim == 1:
@@ -57,11 +59,16 @@ class StateNN(eqx.Module):
     """An MLP with Fourier Features to approximate the combined state [q(t), s(t)]."""
     layers: list
 
-    def __init__(self, key, out_size=15, width=256, depth=3, mapping_size=32, scale=300):
+    def __init__(self, key, out_size=15, width=910, depth=4, mapping_size=258, scale=875.9442322078987):
         fourier_key, *layer_keys = jax.random.split(key, depth + 1)
+
+        # Create the Fourier layer first to access its output_size
+        fourier_layer = FourierFeatures(fourier_key, in_size=1, mapping_size=mapping_size, scale=scale)
+
         self.layers = [
-            FourierFeatures(fourier_key, in_size=1, mapping_size=mapping_size, scale=scale),
-            eqx.nn.Linear(mapping_size, width, key=layer_keys[0]),
+            fourier_layer,
+            # Use the actual output size for the next layer's input
+            eqx.nn.Linear(fourier_layer.output_size, width, key=layer_keys[0]),
             *[eqx.nn.Linear(width, width, key=key) for i in range(1, depth - 1)],
             eqx.nn.Linear(width, out_size, key=layer_keys[-1])
         ]
@@ -222,36 +229,149 @@ class Combined_sPHNN_PINN(eqx.Module):
 # 2. DATA HANDLING
 # ==============================================================================
 
-def generate_data(file_path="data_for_PIN.pkl"):
-    """Loads and prepares training data from a pre-generated pickle file."""
+
+# def generate_data(file_path="data_for_PIN.pkl"):
+#     """Loads and prepares training data from a pre-generated pickle file."""
+#     print(f"Loading simulation data from {file_path}...")
+#     try:
+#         with open(file_path, 'rb') as f:
+#             results = pickle.load(f)
+#     except FileNotFoundError:
+#         print(f"Error: Data file not found at {file_path}")
+#         print("Please ensure 'data_for_PIN.pkl' is in the same directory.")
+#         return None, None, None, None, None
+#
+#     t = jnp.asarray(results['t'])
+#     s = jnp.vstack([
+#         results['e_x'], results['e_y'], results['e_z'],
+#         results['e_u'], results['e_phi']
+#     ]).T
+#     q = jnp.vstack([
+#         results['x1'], results['y1'], results['z1'], results['u1'], results['phi1'],
+#         results['x2'], results['y2'], results['z2'], results['u2'], results['phi2']
+#     ]).T
+#     s_dot_true = jnp.vstack([
+#         results['d_e_x'], results['d_e_y'], results['d_e_z'],
+#         results['d_e_u'], results['d_e_phi']
+#     ]).T
+#     # Load the analytical Hamiltonian
+#     H_analytical = jnp.asarray(results['Hamiltonian'])
+#
+#     print("Data loading complete.")
+#     return t, s, q, s_dot_true, H_analytical
+
+#
+# def generate_data(file_path="error_system_data.pkl"):
+#     """
+#     Loads and prepares training data from a pre-generated pickle file containing
+#     multiple simulation runs.
+#     """
+#     print(f"Loading simulation data from {file_path}...")
+#     try:
+#         with open(file_path, 'rb') as f:
+#             # The file contains a list of result dictionaries
+#             all_runs_results = pickle.load(f)
+#     except FileNotFoundError:
+#         print(f"Error: Data file not found at {file_path}")
+#         print("Please run 'generate_data_for_PINN.py' to create the data file.")
+#         return None, None, None, None, None
+#
+#     # Initialize lists to hold data from all runs
+#     all_t, all_s, all_q, all_s_dot, all_H = [], [], [], [], []
+#
+#     # Process each simulation run
+#     for i, results in enumerate(all_runs_results):
+#         print(f"  ... processing run {i + 1}/{len(all_runs_results)}")
+#
+#         # Extract data for the current run
+#         t = jnp.asarray(results['t'])
+#         s = jnp.vstack([
+#             results['e_x'], results['e_y'], results['e_z'],
+#             results['e_u'], results['e_phi']
+#         ]).T
+#         q = jnp.vstack([
+#             results['x1'], results['y1'], results['z1'], results['u1'], results['phi1'],
+#             results['x2'], results['y2'], results['z2'], results['u2'], results['phi2']
+#         ]).T
+#         s_dot_true = jnp.vstack([
+#             results['d_e_x'], results['d_e_y'], results['d_e_z'],
+#             results['d_e_u'], results['d_e_phi']
+#         ]).T
+#         H_analytical = jnp.asarray(results['Hamiltonian'])
+#
+#         # Append to the main lists
+#         all_t.append(t)
+#         all_s.append(s)
+#         all_q.append(q)
+#         all_s_dot.append(s_dot_true)
+#         all_H.append(H_analytical)
+#
+#     # Concatenate all runs into single arrays
+#     final_t = jnp.concatenate(all_t)
+#     final_s = jnp.concatenate(all_s)
+#     final_q = jnp.concatenate(all_q)
+#     final_s_dot = jnp.concatenate(all_s_dot)
+#     final_H = jnp.concatenate(all_H)
+#
+#     print("Data loading and aggregation complete.")
+#     return final_t, final_s, final_q, final_s_dot, final_H
+
+def generate_data(file_path="error_system_data.pkl"):
+    """
+    Loads and prepares training data from a pre-generated pickle file containing
+    multiple simulation runs.
+    """
     print(f"Loading simulation data from {file_path}...")
     try:
         with open(file_path, 'rb') as f:
-            results = pickle.load(f)
+            all_runs_results = pickle.load(f)
     except FileNotFoundError:
         print(f"Error: Data file not found at {file_path}")
-        print("Please ensure 'data_for_PIN.pkl' is in the same directory.")
+        print("Please run 'generate_data_for_PINN.py' to create the data file.")
         return None, None, None, None, None
 
-    t = jnp.asarray(results['t'])
-    s = jnp.vstack([
-        results['e_x'], results['e_y'], results['e_z'],
-        results['e_u'], results['e_phi']
-    ]).T
-    q = jnp.vstack([
-        results['x1'], results['y1'], results['z1'], results['u1'], results['phi1'],
-        results['x2'], results['y2'], results['z2'], results['u2'], results['phi2']
-    ]).T
-    s_dot_true = jnp.vstack([
-        results['d_e_x'], results['d_e_y'], results['d_e_z'],
-        results['d_e_u'], results['d_e_phi']
-    ]).T
-    # Load the analytical Hamiltonian
-    H_analytical = jnp.asarray(results['Hamiltonian'])
+    all_t, all_s, all_q, all_s_dot, all_H = [], [], [], [], []
+    time_offset = 0.0  # Initialize the time offset
 
-    print("Data loading complete.")
-    return t, s, q, s_dot_true, H_analytical
+    for i, results in enumerate(all_runs_results):
+        print(f"  ... processing run {i + 1}/{len(all_runs_results)}")
 
+        t = jnp.asarray(results['t'])
+        s = jnp.vstack([
+            results['e_x'], results['e_y'], results['e_z'],
+            results['e_u'], results['e_phi']
+        ]).T
+        q = jnp.vstack([
+            results['x1'], results['y1'], results['z1'], results['u1'], results['phi1'],
+            results['x2'], results['y2'], results['z2'], results['u2'], results['phi2']
+        ]).T
+        s_dot_true = jnp.vstack([
+            results['d_e_x'], results['d_e_y'], results['d_e_z'],
+            results['d_e_u'], results['d_e_phi']
+        ]).T
+        H_analytical = jnp.asarray(results['Hamiltonian'])
+
+        # Append data, adding the current offset to the time vector
+        all_t.append(t + time_offset)
+        all_s.append(s)
+        all_q.append(q)
+        all_s_dot.append(s_dot_true)
+        all_H.append(H_analytical)
+
+        # Update the offset for the next run to ensure continuity
+        if t.size > 0:
+            # Add the duration of the current run to the offset
+            time_offset += (t[-1] - t[0])
+
+    # Concatenate all runs into single arrays
+    final_t = jnp.concatenate(all_t)
+    final_s = jnp.concatenate(all_s)
+    final_q = jnp.concatenate(all_q)
+    final_s_dot = jnp.concatenate(all_s_dot)
+    final_H = jnp.concatenate(all_H)
+
+    print("Data loading and aggregation complete.")
+    return final_t, final_s, final_q, final_s_dot, final_H
 
 def normalize(data, mean, std):
     """Normalizes data using pre-computed statistics."""
@@ -446,291 +566,332 @@ def evaluate_model(model, t_batch_norm, s_batch_norm, q_batch_norm, s_dot_batch_
     )
     return loss_val
 
+
 # ==============================================================================
 # 4. MAIN EXECUTION LOGIC
 # ==============================================================================
+def main():
+    """Main function to run the training and evaluation."""
+    # --- Setup and Hyperparameters ---
+    key = jax.random.PRNGKey(42)
+    model_key, data_key = jax.random.split(key)
 
-"""Main function to run the training and evaluation."""
-# --- Setup and Hyperparameters ---
-key = jax.random.PRNGKey(42)
-model_key, data_key = jax.random.split(key)
+    # Training hyperparameters
+    # batch_size = 1000
+    # validation_split = 0.2
+    # initial_learning_rate = 1e-3
+    # end_learning_rate = 5e-5
+    # decay_steps = 3000
+    # epochs = 1000
 
-# Training hyperparameters
-batch_size = 8000
-validation_split = 0.2
-initial_learning_rate = 1e-3
-end_learning_rate = 5e-5
-decay_steps = 3000
-epochs = 5
+    batch_size = 597
+    validation_split = 0.2
+    initial_learning_rate = 0.0009378672299911209
+    end_learning_rate = 5e-5
+    decay_steps = 1732
+    epochs = 2000
 
-# Physics loss hyperparameters with warmup
-lambda_conservative_max = 1
-lambda_dissipative_max = 5
-lambda_physics_max = 15
-lambda_warmup_epochs = 2000
+    # Physics loss hyperparameters with warmup
+    lambda_conservative_max = 0.43586256286303304
+    lambda_dissipative_max = 1.906049602319315
+    lambda_physics_max = 0.40551795249177786
+    lambda_warmup_epochs = 1624
 
-# System parameters
-hr_params = DEFAULT_PARAMS.copy()
+    # System parameters
+    hr_params = DEFAULT_PARAMS.copy()
 
-# --- Generate and Prepare Data ---
-import os
-path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results/', 'data_for_PIN.pkl')
-t, s, q, s_dot_true, H_analytical = generate_data(path)
-if t is None:
-    sys.exit("Exiting: Data loading failed.")
+    # --- Generate and Prepare Data ---
+    import os
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'PINN Data/', 'error_system_data.pkl')
+    t, s, q, s_dot_true, H_analytical = generate_data(path)
+    if t is None:
+        sys.exit("Exiting: Data loading failed.")
 
-num_samples = s.shape[0]
-perm = jax.random.permutation(data_key, num_samples)
-t_shuffled, s_shuffled, q_shuffled, s_dot_shuffled, H_shuffled = t[perm], s[perm], q[perm], s_dot_true[perm], H_analytical[perm]
-t_shuffled = t_shuffled.reshape(-1, 1)
+    num_samples = s.shape[0]
+    perm = jax.random.permutation(data_key, num_samples)
+    t_shuffled, s_shuffled, q_shuffled, s_dot_shuffled, H_shuffled = t[perm], s[perm], q[perm], s_dot_true[perm], H_analytical[perm]
+    t_shuffled = t_shuffled.reshape(-1, 1)
 
-split_idx = int(num_samples * (1 - validation_split))
-t_train, t_val = jnp.split(t_shuffled, [split_idx])
-s_train, s_val = jnp.split(s_shuffled, [split_idx])
-q_train, q_val = jnp.split(q_shuffled, [split_idx])
-s_dot_train, s_dot_val = jnp.split(s_dot_shuffled, [split_idx])
-H_train, H_val = jnp.split(H_shuffled, [split_idx])
+    split_idx = int(num_samples * (1 - validation_split))
+    t_train, t_val = jnp.split(t_shuffled, [split_idx])
+    s_train, s_val = jnp.split(s_shuffled, [split_idx])
+    q_train, q_val = jnp.split(q_shuffled, [split_idx])
+    s_dot_train, s_dot_val = jnp.split(s_dot_shuffled, [split_idx])
+    H_train, H_val = jnp.split(H_shuffled, [split_idx])
 
-# --- Normalize Data (using ONLY training set statistics) ---
-t_mean, t_std = jnp.mean(t_train), jnp.std(t_train)
-s_mean, s_std = jnp.mean(s_train, axis=0), jnp.std(s_train, axis=0)
-q_mean, q_std = jnp.mean(q_train, axis=0), jnp.std(q_train, axis=0)
-s_dot_mean, s_dot_std = jnp.mean(s_dot_train, axis=0), jnp.std(s_dot_train, axis=0)
-H_mean, H_std = jnp.mean(H_train), jnp.std(H_train)
+    # --- Normalize Data (using ONLY training set statistics) ---
+    t_mean, t_std = jnp.mean(t_train), jnp.std(t_train)
+    s_mean, s_std = jnp.mean(s_train, axis=0), jnp.std(s_train, axis=0)
+    q_mean, q_std = jnp.mean(q_train, axis=0), jnp.std(q_train, axis=0)
+    s_dot_mean, s_dot_std = jnp.mean(s_dot_train, axis=0), jnp.std(s_dot_train, axis=0)
+    H_mean, H_std = jnp.mean(H_train), jnp.std(H_train)
 
-t_train_norm = normalize(t_train, t_mean, t_std)
-s_train_norm = normalize(s_train, s_mean, s_std)
-q_train_norm = normalize(q_train, q_mean, q_std)
-s_dot_train_norm = normalize(s_dot_train, s_dot_mean, s_dot_std)
-H_train_norm = normalize(H_train, H_mean, H_std)
+    t_train_norm = normalize(t_train, t_mean, t_std)
+    s_train_norm = normalize(s_train, s_mean, s_std)
+    q_train_norm = normalize(q_train, q_mean, q_std)
+    s_dot_train_norm = normalize(s_dot_train, s_dot_mean, s_dot_std)
+    H_train_norm = normalize(H_train, H_mean, H_std)
 
-t_val_norm = normalize(t_val, t_mean, t_std)
-s_val_norm = normalize(s_val, s_mean, s_std)
-q_val_norm = normalize(q_val, q_mean, q_std)
-s_dot_val_norm = normalize(s_dot_val, s_dot_mean, s_dot_std)
-H_val_norm = normalize(H_val, H_mean, H_std)
+    t_val_norm = normalize(t_val, t_mean, t_std)
+    s_val_norm = normalize(s_val, s_mean, s_std)
+    q_val_norm = normalize(q_val, q_mean, q_std)
+    s_dot_val_norm = normalize(s_dot_val, s_dot_mean, s_dot_std)
+    H_val_norm = normalize(H_val, H_mean, H_std)
 
-# --- Centralized Neural Network Configuration ---
-s_dim = s_train.shape[1]
-q_dim = q_train.shape[1]
-nn_config = {
-    "state_dim": s_dim, 
-    "h_width": 128, "h_depth": 3, "h_epsilon": 0.525,
-    "d_width": 2, "d_depth": 3, "j_width": 2, "j_depth": 3,
-    "activation": jax.nn.softplus,
-}
+    # --- Centralized Neural Network Configuration ---
+    s_dim = s_train.shape[1]
+    q_dim = q_train.shape[1]
+    nn_config = {
+        "state_dim": s_dim,
+        "h_width": 449, "h_depth": 4, "h_epsilon": 2.793167243576169,
+        "d_width": 28, "d_depth": 5,
+        "j_width": 55, "j_depth": 6,
+        "activation": jax.nn.softplus,
+    }
 
-# Initialize the combined model
-model = Combined_sPHNN_PINN(key=model_key, config=nn_config)
+    # Initialize the combined model
+    model = Combined_sPHNN_PINN(key=model_key, config=nn_config)
 
-# --- Training Loop ---
-lr_schedule = optax.linear_schedule(
-    init_value=initial_learning_rate,
-    end_value=end_learning_rate,
-    transition_steps=decay_steps
-)
-optimizer = optax.adamw(learning_rate=lr_schedule)
-opt_state = optimizer.init(eqx.filter(model, eqx.is_array))
+    # --- Training Loop ---
+    lr_schedule = optax.linear_schedule(
+        init_value=initial_learning_rate,
+        end_value=end_learning_rate,
+        transition_steps=decay_steps
+    )
+    optimizer = optax.adamw(learning_rate=lr_schedule)
+    opt_state = optimizer.init(eqx.filter(model, eqx.is_array))
 
-train_losses, val_losses = [], []
-phys_losses, conservative_losses, dissipative_losses, hamiltonian_losses = [], [], [], []
-best_model, best_val_loss = model, jnp.inf
+    train_losses, val_losses = [], []
+    phys_losses, conservative_losses, dissipative_losses, hamiltonian_losses = [], [], [], []
+    best_model, best_val_loss = model, jnp.inf
 
-num_batches = t_train_norm.shape[0] // batch_size
-if num_batches == 0 and t_train_norm.shape[0] > 0:
-    print(f"Warning: batch_size ({batch_size}) > num samples. Setting num_batches to 1.")
-    num_batches = 1
+    num_batches = t_train_norm.shape[0] // batch_size
+    if num_batches == 0 and t_train_norm.shape[0] > 0:
+        print(f"Warning: batch_size ({batch_size}) > num samples. Setting num_batches to 1.")
+        num_batches = 1
 
-print(f"Starting training for {epochs} epochs...")
-for epoch in range(epochs):
-    # Loss weight warmup schedule
-    warmup_factor = jnp.minimum(1.0, (epoch + 1) / lambda_warmup_epochs)
-    current_lambda_conservative = lambda_conservative_max * warmup_factor
-    current_lambda_dissipative = lambda_dissipative_max * warmup_factor
-    current_lambda_physics = lambda_physics_max * warmup_factor
+    print(f"Starting training for {epochs} epochs...")
+    for epoch in range(epochs):
+        # Loss weight warmup schedule
+        warmup_factor = jnp.minimum(1.0, (epoch + 1) / lambda_warmup_epochs)
+        current_lambda_conservative = lambda_conservative_max * warmup_factor
+        current_lambda_dissipative = lambda_dissipative_max * warmup_factor
+        current_lambda_physics = lambda_physics_max * warmup_factor
 
-    key, shuffle_key = jax.random.split(key)
-    perm = jax.random.permutation(shuffle_key, t_train_norm.shape[0])
-    t_shuffled = t_train_norm[perm]
-    s_shuffled = s_train_norm[perm]
-    q_shuffled = q_train_norm[perm]
-    s_dot_shuffled = s_dot_train_norm[perm]
-    H_shuffled = H_train_norm[perm]
+        key, shuffle_key = jax.random.split(key)
+        perm = jax.random.permutation(shuffle_key, t_train_norm.shape[0])
+        t_shuffled = t_train_norm[perm]
+        s_shuffled = s_train_norm[perm]
+        q_shuffled = q_train_norm[perm]
+        s_dot_shuffled = s_dot_train_norm[perm]
+        H_shuffled = H_train_norm[perm]
 
-    # Initialize epoch loss accumulators
-    epoch_losses = {k: 0.0 for k in ["total", "data_unified", "phys", "conservative", "dissipative", "hamiltonian"]}
-    
-    for i in range(num_batches):
-        start, end = i * batch_size, (i + 1) * batch_size
-        t_b, s_b, q_b, s_dot_b, H_b = t_shuffled[start:end], s_shuffled[start:end], q_shuffled[start:end], s_dot_shuffled[start:end], H_shuffled[start:end]
+        # Initialize epoch loss accumulators
+        epoch_losses = {k: 0.0 for k in ["total", "data_unified", "phys", "conservative", "dissipative", "hamiltonian"]}
 
-        model, opt_state, train_loss_val, loss_comps = train_step(
-            model, opt_state, optimizer, t_b, s_b, q_b, s_dot_b, H_b,
+        for i in range(num_batches):
+            start, end = i * batch_size, (i + 1) * batch_size
+            t_b, s_b, q_b, s_dot_b, H_b = t_shuffled[start:end], s_shuffled[start:end], q_shuffled[start:end], s_dot_shuffled[start:end], H_shuffled[start:end]
+
+            model, opt_state, train_loss_val, loss_comps = train_step(
+                model, opt_state, optimizer, t_b, s_b, q_b, s_dot_b, H_b,
+                current_lambda_conservative, current_lambda_dissipative, current_lambda_physics, hr_params,
+                t_mean, t_std, s_mean, s_std, q_mean, q_std, s_dot_mean, s_dot_std, H_mean, H_std
+            )
+            for k in epoch_losses:
+                if k in loss_comps:
+                    epoch_losses[k] += loss_comps[k]
+
+        # Calculate average losses for the epoch
+        avg_losses = {k: v / num_batches for k, v in epoch_losses.items()}
+
+        val_loss = evaluate_model(
+            model, t_val_norm, s_val_norm, q_val_norm, s_dot_val_norm, H_val_norm,
             current_lambda_conservative, current_lambda_dissipative, current_lambda_physics, hr_params,
             t_mean, t_std, s_mean, s_std, q_mean, q_std, s_dot_mean, s_dot_std, H_mean, H_std
         )
-        for k in epoch_losses:
-            if k in loss_comps:
-                epoch_losses[k] += loss_comps[k]
 
-    # Calculate average losses for the epoch
-    avg_losses = {k: v / num_batches for k, v in epoch_losses.items()}
+        train_losses.append(avg_losses["total"])
+        val_losses.append(val_loss)
+        phys_losses.append(avg_losses["phys"])
+        conservative_losses.append(avg_losses["conservative"])
+        dissipative_losses.append(avg_losses["dissipative"])
+        hamiltonian_losses.append(avg_losses["hamiltonian"])
 
-    val_loss = evaluate_model(
-        model, t_val_norm, s_val_norm, q_val_norm, s_dot_val_norm, H_val_norm,
-        current_lambda_conservative, current_lambda_dissipative, current_lambda_physics, hr_params,
-        t_mean, t_std, s_mean, s_std, q_mean, q_std, s_dot_mean, s_dot_std, H_mean, H_std
-    )
-    
-    train_losses.append(avg_losses["total"])
-    val_losses.append(val_loss)
-    phys_losses.append(avg_losses["phys"])
-    conservative_losses.append(avg_losses["conservative"])
-    dissipative_losses.append(avg_losses["dissipative"])
-    hamiltonian_losses.append(avg_losses["hamiltonian"])
+        '''if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            best_model = model'''
+        best_model = model
 
-    '''if val_loss < best_val_loss:
-        best_val_loss = val_loss
-        best_model = model'''
-    best_model = model
-
-    if (epoch + 1) % 100 == 0 or epoch == 0:
-        log_str = (
-            f"Epoch {epoch+1}/{epochs} | Train Loss: {avg_losses['total']:.4f} | Val Loss: {val_loss:.4f} | "
-            f"Data: {avg_losses['data_unified']:.4f} | "
-            f"Phys: {avg_losses['phys']:.4f} | "
-            f"Cons: {avg_losses['conservative']:.4f} | Diss: {avg_losses['dissipative']:.4f} | "
-            f"H_Loss: {avg_losses['hamiltonian']:.4f}"
-        )
-        print(log_str)
+        if (epoch + 1) % 100 == 0 or epoch == 0:
+            log_str = (
+                f"Epoch {epoch+1}/{epochs} | Train Loss: {avg_losses['total']:.4f} | Val Loss: {val_loss:.4f} | "
+                f"Data: {avg_losses['data_unified']:.4f} | "
+                f"Phys: {avg_losses['phys']:.4f} | "
+                f"Cons: {avg_losses['conservative']:.4f} | Diss: {avg_losses['dissipative']:.4f} | "
+                f"H_Loss: {avg_losses['hamiltonian']:.4f}"
+            )
+            print(log_str)
 
 
-print("Training finished.")
-print(f"Best validation loss achieved: {best_val_loss:.6f}")
+    print("Training finished.")
+    print(f"Best validation loss achieved: {best_val_loss:.6f}")
 
-#%%
-# ==============================================================================
-# 5. VISUALIZATION AND ANALYSIS
-# ==============================================================================
+    #%%
+    # ==============================================================================
+    # 5. VISUALIZATION AND ANALYSIS
+    # ==============================================================================
 
-output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'PINN Data/')
-os.makedirs(output_dir, exist_ok=True)
+    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'temp/')
+    os.makedirs(output_dir, exist_ok=True)
 
-print("\nGenerating visualization plots...")
-# Use the full, unsplit, time-ordered data for coherent plots
-t_test = t.reshape(-1, 1)
-s_test, q_test, s_dot_test, H_analytical_vis = s, q, s_dot_true, H_analytical
-t_test_norm = normalize(t_test, t_mean, t_std)
+    run_to_visualize_idx = 0 # <-- CHOOSE WHICH SIMULATION RUN TO PLOT
 
-# --- Get all model predictions for the full dataset ---
-all_states_pred_norm = jax.vmap(best_model.state_net)(t_test_norm)
-q_pred_norm = all_states_pred_norm[:, :10]
-s_pred_norm = all_states_pred_norm[:, 10:]
+    print(f"\nGenerating visualization plots for simulation run #{run_to_visualize_idx + 1}...")
 
-s_pred = denormalize(s_pred_norm, s_mean, s_std)
-q_pred = denormalize(q_pred_norm, q_mean, q_std)
+    # Load the data again to isolate a single run for clean plotting
+    with open(path, 'rb') as f:
+        all_runs = pickle.load(f)
 
-# --- Calculate all derivatives for comparison ---
-grad_H_norm = jax.vmap(jax.grad(best_model.hamiltonian_net))(s_pred_norm)
-J_norm = jax.vmap(best_model.j_net)(s_pred_norm)
-R_norm = jax.vmap(best_model.dissipation_net)(s_pred_norm)
-s_dot_from_structure_norm = jax.vmap(lambda j, r, g: (j - r) @ g)(J_norm, R_norm, grad_H_norm)
-s_dot_from_structure = s_dot_from_structure_norm * s_std
+    # Ensure the chosen index is valid
+    if run_to_visualize_idx >= len(all_runs):
+        print(f"Error: 'run_to_visualize_idx' ({run_to_visualize_idx}) is out of bounds. Max is {len(all_runs)-1}. Setting to 0.")
+        run_to_visualize_idx = 0
 
-f_c_batch_vis = jax.vmap(f_c_fn, in_axes=(0, 0, None))(s_pred, q_pred, hr_params)
-f_d_batch_vis = jax.vmap(f_d_fn, in_axes=(0, 0, None))(s_pred, q_pred, hr_params)
-s_dot_from_equations = f_c_batch_vis + f_d_batch_vis
+    vis_results = all_runs[run_to_visualize_idx]
 
-# Need to compute autodiff for the s-slice of the StateNN's output
-get_s_slice_autodiff_grad = lambda net, t: jax.jvp(lambda t_scalar: net(t_scalar)[10:], (t,), (jnp.ones_like(t),))[1]
-s_dot_autodiff_norm = jax.vmap(get_s_slice_autodiff_grad, in_axes=(None, 0))(best_model.state_net, t_test_norm)
-s_dot_autodiff = s_dot_autodiff_norm * (s_std / (t_std + 1e-8))
+    # Use the selected run's data for all subsequent plotting
+    t_test = jnp.asarray(vis_results['t']).reshape(-1, 1)
+    s_test = jnp.vstack([
+        vis_results['e_x'], vis_results['e_y'], vis_results['e_z'],
+        vis_results['e_u'], vis_results['e_phi']
+    ]).T
+    q_test = jnp.vstack([
+        vis_results['x1'], vis_results['y1'], vis_results['z1'], vis_results['u1'], vis_results['phi1'],
+        vis_results['x2'], vis_results['y2'], vis_results['z2'], vis_results['u2'], vis_results['phi2']
+    ]).T
+    s_dot_test = jnp.vstack([
+        vis_results['d_e_x'], vis_results['d_e_y'], vis_results['d_e_z'],
+        vis_results['d_e_u'], vis_results['d_e_phi']
+    ]).T
+    H_analytical_vis = jnp.asarray(vis_results['Hamiltonian'])
+
+    # Normalize the visualization data using the previously computed training statistics
+    t_test_norm = normalize(t_test, t_mean, t_std)
+
+    # --- Get all model predictions for the full dataset ---
+    all_states_pred_norm = jax.vmap(best_model.state_net)(t_test_norm)
+    q_pred_norm = all_states_pred_norm[:, :10]
+    s_pred_norm = all_states_pred_norm[:, 10:]
+
+    s_pred = denormalize(s_pred_norm, s_mean, s_std)
+    q_pred = denormalize(q_pred_norm, q_mean, q_std)
+
+    # --- Calculate all derivatives for comparison ---
+    grad_H_norm = jax.vmap(jax.grad(best_model.hamiltonian_net))(s_pred_norm)
+    J_norm = jax.vmap(best_model.j_net)(s_pred_norm)
+    R_norm = jax.vmap(best_model.dissipation_net)(s_pred_norm)
+    s_dot_from_structure_norm = jax.vmap(lambda j, r, g: (j - r) @ g)(J_norm, R_norm, grad_H_norm)
+    s_dot_from_structure = s_dot_from_structure_norm * s_std
+
+    f_c_batch_vis = jax.vmap(f_c_fn, in_axes=(0, 0, None))(s_pred, q_pred, hr_params)
+    f_d_batch_vis = jax.vmap(f_d_fn, in_axes=(0, 0, None))(s_pred, q_pred, hr_params)
+    s_dot_from_equations = f_c_batch_vis + f_d_batch_vis
+
+    # Need to compute autodiff for the s-slice of the StateNN's output
+    get_s_slice_autodiff_grad = lambda net, t: jax.jvp(lambda t_scalar: net(t_scalar)[10:], (t,), (jnp.ones_like(t),))[1]
+    s_dot_autodiff_norm = jax.vmap(get_s_slice_autodiff_grad, in_axes=(None, 0))(best_model.state_net, t_test_norm)
+    s_dot_autodiff = s_dot_autodiff_norm * (s_std / (t_std + 1e-8))
 
 
-# --- Plot 1: Learned vs Analytical Hamiltonian ---
-print("Comparing learned Hamiltonian with analytical solution...")
-H_learned_norm = jax.vmap(best_model.hamiltonian_net)(s_pred_norm)
-H_learned_flipped = (-1) * H_learned_norm
-H_learned_aligned = H_learned_flipped - jnp.mean(H_learned_flipped) + jnp.mean(H_analytical_vis)
+    # --- Plot 1: Learned vs Analytical Hamiltonian ---
+    print("Comparing learned Hamiltonian with analytical solution...")
+    H_learned_norm = jax.vmap(best_model.hamiltonian_net)(s_pred_norm)
+    H_learned_flipped = (-1) * H_learned_norm
+    H_learned_aligned = H_learned_flipped - jnp.mean(H_learned_flipped) + jnp.mean(H_analytical_vis)
 
-plt.figure(figsize=(12, 7))
-plt.plot(t_test[:1500], H_analytical_vis[:1500], label='Analytical Hamiltonian', color='blue')
-plt.plot(t_test[:1500], H_learned_aligned[:1500], label='Learned Hamiltonian (Aligned)', color='red')
-plt.title("Time Evolution of Hamiltonians", fontsize=16)
-plt.xlabel("Time", fontsize=14)
-plt.ylabel("Hamiltonian Value", fontsize=14)
-plt.legend(fontsize=12)
-plt.grid(True)
-plt.savefig(os.path.join(output_dir, 'hamiltonian_comparison.png'), dpi=300)
-plt.tight_layout()
+    plt.figure(figsize=(12, 7))
+    plt.plot(t_test[:1500], H_analytical_vis[:1500], label='Analytical Hamiltonian', color='blue')
+    plt.plot(t_test[:1500], H_learned_aligned[:1500], label='Learned Hamiltonian (Aligned)', color='red')
+    plt.title("Time Evolution of Hamiltonians", fontsize=16)
+    plt.xlabel("Time", fontsize=14)
+    plt.ylabel("Hamiltonian Value", fontsize=14)
+    plt.legend(fontsize=12)
+    plt.grid(True)
+    plt.savefig(os.path.join(output_dir, 'hamiltonian_comparison.png'), dpi=300)
+    plt.tight_layout()
 
 
-# --- Plot 2: Training, Validation, and Physics Losses ---
-plt.figure(figsize=(12, 7))
-plt.plot(train_losses, label='Total Training Loss')
-plt.plot(val_losses, label='Total Validation Loss')
-plt.plot(hamiltonian_losses, label='Hamiltonian Loss', color='red')
-plt.plot(phys_losses, label='Physics Loss', color='purple')
-plt.plot(conservative_losses, label='Conservative Loss', alpha=0.7)
-plt.plot(dissipative_losses, label='Dissipative Loss', alpha=0.7)
-plt.yscale('log')
-plt.title('Training, Validation, and Physics Losses Over Epochs', fontsize=16)
-plt.xlabel('Epoch', fontsize=12)
-plt.ylabel('Loss (Log Scale)', fontsize=12)
-plt.legend()
-plt.grid(True, which="both", ls="--")
-plt.savefig(os.path.join(output_dir, 'training_losses.png'), dpi=300)
-plt.tight_layout()
+    # --- Plot 2: Training, Validation, and Physics Losses ---
+    plt.figure(figsize=(12, 7))
+    plt.plot(train_losses, label='Total Training Loss')
+    plt.plot(val_losses, label='Total Validation Loss')
+    plt.plot(hamiltonian_losses, label='Hamiltonian Loss', color='red')
+    plt.plot(phys_losses, label='Physics Loss', color='purple')
+    plt.plot(conservative_losses, label='Conservative Loss', alpha=0.7)
+    plt.plot(dissipative_losses, label='Dissipative Loss', alpha=0.7)
+    plt.yscale('log')
+    plt.title('Training, Validation, and Physics Losses Over Epochs', fontsize=16)
+    plt.xlabel('Epoch', fontsize=12)
+    plt.ylabel('Loss (Log Scale)', fontsize=12)
+    plt.legend()
+    plt.grid(True, which="both", ls="--")
+    plt.savefig(os.path.join(output_dir, 'training_losses.png'), dpi=300)
+    plt.tight_layout()
 
-# --- Plot 3: Derivative Comparison (Physics Fidelity) ---
-fig, axes = plt.subplots(s_test.shape[1], 1, figsize=(12, 12), sharex=True)
-state_labels_s_dot = [r'$\dot{e}_x$', r'$\dot{e}_y$', r'$\dot{e}_z$', r'$\dot{e}_u$', r'$\dot{e}_\phi$']
-fig.suptitle("Derivative Fidelity Comparison", fontsize=18, y=0.99)
+    # --- Plot 3: Derivative Comparison (Physics Fidelity) ---
+    fig, axes = plt.subplots(s_test.shape[1], 1, figsize=(12, 12), sharex=True)
+    state_labels_s_dot = [r'$\dot{e}_x$', r'$\dot{e}_y$', r'$\dot{e}_z$', r'$\dot{e}_u$', r'$\dot{e}_\phi$']
+    fig.suptitle("Derivative Fidelity Comparison", fontsize=18, y=0.99)
 
-for i in range(s_test.shape[1]):
-    axes[i].plot(t_test[:1500], s_dot_test[:1500, i], label='True Derivative', color='green', linewidth=3, alpha=0.8)
-    axes[i].plot(t_test[:1500], s_dot_from_structure[:1500, i], label='sPHNN Structure', color='red')
-    axes[i].plot(t_test[:1500], s_dot_from_equations[:1500, i], label='Analytical Eq. (f_c+f_d)', color='purple')
-    axes[i].plot(t_test[:1500], s_dot_autodiff[:1500, i], label='Autodiff', color='orange')
+    for i in range(s_test.shape[1]):
+        axes[i].plot(t_test[:1500], s_dot_test[:1500, i], label='True Derivative', color='green', linewidth=3, alpha=0.8)
+        axes[i].plot(t_test[:1500], s_dot_from_structure[:1500, i], label='sPHNN Structure', color='red')
+        axes[i].plot(t_test[:1500], s_dot_from_equations[:1500, i], label='Analytical Eq. (f_c+f_d)', color='purple')
+        axes[i].plot(t_test[:1500], s_dot_autodiff[:1500, i], label='Autodiff', color='orange')
 
-    axes[i].set_ylabel(state_labels_s_dot[i], fontsize=14)
-    axes[i].grid(True)
-    axes[i].legend(loc='upper right')
+        axes[i].set_ylabel(state_labels_s_dot[i], fontsize=14)
+        axes[i].grid(True)
+        axes[i].legend(loc='upper right')
 
-axes[-1].set_xlabel("Time", fontsize=14)
-fig.savefig(os.path.join(output_dir, 'derivative_fidelity.png'), dpi=300)
-plt.tight_layout(rect=[0, 0, 1, 0.97])
+    axes[-1].set_xlabel("Time", fontsize=14)
+    fig.savefig(os.path.join(output_dir, 'derivative_fidelity.png'), dpi=300)
+    plt.tight_layout(rect=[0, 0, 1, 0.97])
 
-# --- Plot 4: Error System State Trajectories (s) ---
-fig, axes = plt.subplots(s_test.shape[1], 1, figsize=(12, 10), sharex=True)
-state_labels_error = [r'$e_x$', r'$e_y$', r'$e_z$', r'$e_u$', r'$e_\phi$']
-fig.suptitle("Error System State 's' Prediction: True vs. Predicted", fontsize=18, y=0.99)
-for i in range(s_test.shape[1]):
-    axes[i].plot(t_test[:1500], s_test[:1500, i], 'b', label='True State', alpha=0.9)
-    axes[i].plot(t_test[:1500], s_pred[:1500, i], 'r', label='Predicted State')
-    axes[i].set_ylabel(state_labels_error[i], fontsize=14)
-    axes[i].grid(True)
-    axes[i].legend(loc='upper right')
-axes[-1].set_xlabel("Time", fontsize=14)
-fig.savefig(os.path.join(output_dir, 'error_state_s_prediction.png'), dpi=300)
-plt.tight_layout(rect=[0, 0, 1, 0.97])
+    # --- Plot 4: Error System State Trajectories (s) ---
+    fig, axes = plt.subplots(s_test.shape[1], 1, figsize=(12, 10), sharex=True)
+    state_labels_error = [r'$e_x$', r'$e_y$', r'$e_z$', r'$e_u$', r'$e_\phi$']
+    fig.suptitle("Error System State 's' Prediction: True vs. Predicted", fontsize=18, y=0.99)
+    for i in range(s_test.shape[1]):
+        axes[i].plot(t_test[:1500], s_test[:1500, i], 'b', label='True State', alpha=0.9)
+        axes[i].plot(t_test[:1500], s_pred[:1500, i], 'r', label='Predicted State')
+        axes[i].set_ylabel(state_labels_error[i], fontsize=14)
+        axes[i].grid(True)
+        axes[i].legend(loc='upper right')
+    axes[-1].set_xlabel("Time", fontsize=14)
+    fig.savefig(os.path.join(output_dir, 'error_state_s_prediction.png'), dpi=300)
+    plt.tight_layout(rect=[0, 0, 1, 0.97])
 
-# --- Plot 5: HR System State Trajectories (q) ---
-fig, axes = plt.subplots(q_test.shape[1], 1, figsize=(12, 18), sharex=True)
-state_labels_q = [
-    r'$x_1$', r'$y_1$', r'$z_1$', r'$u_1$', r'$\phi_1$',
-    r'$x_2$', r'$y_2$', r'$z_2$', r'$u_2$', r'$\phi_2$'
-]
-fig.suptitle("HR System State 'q' Prediction: True vs. Predicted", fontsize=18, y=0.99)
-for i in range(q_test.shape[1]):
-    axes[i].plot(t_test[:1500], q_test[:1500, i], 'b', label='True State', alpha=0.9)
-    axes[i].plot(t_test[:1500], q_pred[:1500, i], 'r', label='Predicted State')
-    axes[i].set_ylabel(state_labels_q[i], fontsize=14)
-    axes[i].grid(True)
-    axes[i].legend(loc='upper right')
-axes[-1].set_xlabel("Time", fontsize=14)
-fig.savefig(os.path.join(output_dir, 'hr_state_q_prediction.png'), dpi=300)
-plt.tight_layout(rect=[0, 0, 1, 0.97])
+    # --- Plot 5: HR System State Trajectories (q) ---
+    fig, axes = plt.subplots(q_test.shape[1], 1, figsize=(12, 18), sharex=True)
+    state_labels_q = [
+        r'$x_1$', r'$y_1$', r'$z_1$', r'$u_1$', r'$\phi_1$',
+        r'$x_2$', r'$y_2$', r'$z_2$', r'$u_2$', r'$\phi_2$'
+    ]
+    fig.suptitle("HR System State 'q' Prediction: True vs. Predicted", fontsize=18, y=0.99)
+    for i in range(q_test.shape[1]):
+        axes[i].plot(t_test[:1500], q_test[:1500, i], 'b', label='True State', alpha=0.9)
+        axes[i].plot(t_test[:1500], q_pred[:1500, i], 'r', label='Predicted State')
+        axes[i].set_ylabel(state_labels_q[i], fontsize=14)
+        axes[i].grid(True)
+        axes[i].legend(loc='upper right')
+    axes[-1].set_xlabel("Time", fontsize=14)
+    fig.savefig(os.path.join(output_dir, 'hr_state_q_prediction.png'), dpi=300)
+    plt.tight_layout(rect=[0, 0, 1, 0.97])
 
-plt.close('all')
-print(f"All plots saved to {output_dir}")
+    plt.close('all')
+    print(f"All plots saved to {output_dir}")
+
+
+if __name__ == "__main__":
+    main()

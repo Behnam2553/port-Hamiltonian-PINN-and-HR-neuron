@@ -5,20 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="329fa9e5-44a8-417a-9e59-78d39b36ad50" name="Changes" comment="plotting features">
+      <change afterPath="$PROJECT_DIR$/src/sph_pinn/optimize_hyperparams.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/laboratory/bifurcation_analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/laboratory/bifurcation_analysis.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/laboratory/v_dot_parameter_sweep_1D.py" beforeDir="false" afterPath="$PROJECT_DIR$/laboratory/v_dot_parameter_sweep_1D.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/laboratory/v_dot_parameter_sweep_2D.py" beforeDir="false" afterPath="$PROJECT_DIR$/laboratory/v_dot_parameter_sweep_2D.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/hr_model/error_system.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/hr_model/error_system.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/hr_model/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/hr_model/model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/hr_model/physics.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/hr_model/physics.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/sph_pinn/3Stage_phpinn.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/src/sph_pinn/3Stage_phpinn.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/laboratory/generate_data_for_PINN.py" beforeDir="false" afterPath="$PROJECT_DIR$/laboratory/generate_data_for_PINN.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project_map.txt" beforeDir="false" afterPath="$PROJECT_DIR$/project_map.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/data_for_PIN.pkl" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/sph_pinn/pH_PINN.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/sph_pinn/pH_PINN.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/sph_pinn/phpinn.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/src/sph_pinn/phpinn.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/sph_pinn/pinn.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/src/sph_pinn/pinn.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization/.ipynb_checkpoints/plotting-checkpoint.py" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/.ipynb_checkpoints/plotting-checkpoint.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization/literature plots/plot_error_system.py" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/literature plots/plot_error_system.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization/plotting.py" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/plotting.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,6 +20,7 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
+        <option value="Jupyter Notebook" />
         <option value="Python Script" />
       </list>
     </option>
@@ -66,6 +59,7 @@
     "Python.extract_project.executor": "Run",
     "Python.generate_data_for_PINN.executor": "Run",
     "Python.model.executor": "Run",
+    "Python.optimize_hyperparams.executor": "Run",
     "Python.pH_PINN.executor": "Run",
     "Python.physics.executor": "Run",
     "Python.plot_bif_lya.executor": "Run",
@@ -116,7 +110,7 @@
       <workItem from="1756422731219" duration="5370000" />
       <workItem from="1756428179108" duration="200000" />
       <workItem from="1756462232228" duration="5051000" />
-      <workItem from="1756467367474" duration="4559000" />
+      <workItem from="1756467367474" duration="52760000" />
     </task>
     <task id="LOCAL-00001" summary="initial commit">
       <option name="closed" value="true" />
@@ -190,7 +184,15 @@
       <option name="project" value="LOCAL" />
       <updated>1756469311460</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="plotting features">
+      <option name="closed" value="true" />
+      <created>1756472044283</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1756472044283</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -222,10 +224,11 @@
     <SUITE FILE_PATH="coverage/Thesis$physics.coverage" NAME="physics Coverage Results" MODIFIED="1756471090169" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/hr_model" />
     <SUITE FILE_PATH="coverage/Thesis$Combined_State_Hamil_JRH.coverage" NAME="Combined_State_Hamil_JRH Coverage Results" MODIFIED="1756424302298" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/sph_pinn" />
     <SUITE FILE_PATH="coverage/Thesis$plot_bif_lya.coverage" NAME="plot_bif_lya Coverage Results" MODIFIED="1756333113255" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/visualization/literature plots" />
-    <SUITE FILE_PATH="coverage/Thesis$generate_data_for_PINN.coverage" NAME="generate_data_for_PINN Coverage Results" MODIFIED="1756470348832" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/laboratory" />
+    <SUITE FILE_PATH="coverage/Thesis$generate_data_for_PINN.coverage" NAME="generate_data_for_PINN Coverage Results" MODIFIED="1756561247210" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/laboratory" />
     <SUITE FILE_PATH="coverage/Thesis$test_gpu.coverage" NAME="test_gpu Coverage Results" MODIFIED="1756462453304" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/sph_pinn" />
-    <SUITE FILE_PATH="coverage/Thesis$extract_project.coverage" NAME="extract_project Coverage Results" MODIFIED="1756470510697" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/utils" />
-    <SUITE FILE_PATH="coverage/Thesis$pH_PINN.coverage" NAME="pH_PINN Coverage Results" MODIFIED="1756427201387" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/sph_pinn" />
+    <SUITE FILE_PATH="coverage/Thesis$extract_project.coverage" NAME="extract_project Coverage Results" MODIFIED="1756513169844" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/utils" />
+    <SUITE FILE_PATH="coverage/Thesis$optimize_hyperparams.coverage" NAME="optimize_hyperparams Coverage Results" MODIFIED="1756561634788" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/sph_pinn" />
+    <SUITE FILE_PATH="coverage/Thesis$pH_PINN.coverage" NAME="pH_PINN Coverage Results" MODIFIED="1756560629920" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/sph_pinn" />
     <SUITE FILE_PATH="coverage/Thesis$plotting.coverage" NAME="plotting Coverage Results" MODIFIED="1756420073092" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/visualization" />
   </component>
 </project>
