@@ -310,7 +310,7 @@ if __name__ == '__main__':
     from visualization.plotting import plot_pinn_data
 
     sim_params = DEFAULT_PARAMS.copy()
-    sim_params['ge'] = 0.65
+    sim_params['ge'] = 0.62
 
     import os
     output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'PINN Data/')
@@ -322,9 +322,9 @@ if __name__ == '__main__':
                   dynamics = 'complete',
                   param_dict = sim_params,
                   initial_state_range = (-1, 1),
-                  end_time = 500,
-                  n_points = 5000,
-                  seed=32,
+                  end_time = 1000,
+                  n_points = 10000,
+                  seed=55,
                   output_file=output_file
                   )
 
@@ -3142,7 +3142,6 @@ if __name__ == '__main__':
 - 3Stage_phpinn.ipynb
 - phpinn.ipynb
 - pinn.ipynb
-- test.ipynb
 
 ### Python Source Files:
 
@@ -3247,26 +3246,22 @@ class Combined_sPHNN_PINN(eqx.Module):
 def objective(trial, epochs_per_trial, static_data):
     """
     The main objective function that Optuna will minimize.
-
     Args:
         trial (optuna.Trial): An Optuna trial object used to suggest hyperparameters.
         epochs_per_trial (int): The number of epochs to train for during each trial.
         static_data (dict): A dictionary containing all pre-processed data and stats.
-
     Returns:
-        float: The best validation loss achieved during the trial.
+        float: The best training Hamiltonian loss achieved during the trial.
     """
     # --- 1. Suggest Hyperparameters from the Search Space ---
     key = jax.random.PRNGKey(42)  # Use a fixed key for reproducibility across trials
     model_key, _ = jax.random.split(key)
 
     # StateNN Fourier Features
-
-    mapping_size = trial.suggest_int("mapping_size", 64, 512)
+    mapping_size = trial.suggest_int("mapping_size", 64, 512, step=2)  # Enforce even numbers
     scale = trial.suggest_float("scale", 10, 1000, log=True)
 
     # Network Architectures
-
     state_width = trial.suggest_int("state_width", 64, 1024)
     state_depth = trial.suggest_int("state_depth", 2, 6)
     h_width = trial.suggest_int("h_width", 32, 512)
@@ -3288,7 +3283,6 @@ def objective(trial, epochs_per_trial, static_data):
     lambda_physics_max = trial.suggest_float("lambda_physics_max", 0.1, 10, log=True)
     lambda_warmup_epochs = trial.suggest_int("lambda_warmup_epochs", 500, 2000)
 
-
     # --- 2. Build Model and Optimizer with Suggested Values ---
     nn_config = {
         "state_dim": static_data['s_dim'],
@@ -3308,8 +3302,8 @@ def objective(trial, epochs_per_trial, static_data):
     optimizer = optax.adamw(learning_rate=lr_schedule)
     opt_state = optimizer.init(eqx.filter(model, eqx.is_array))
 
-    # --- 3. Run the Training and Validation Loop ---
-    best_hamiltonian_loss = jnp.inf
+    # --- 3. Run the Training Loop and Track Training Hamiltonian Loss ---
+    best_training_hamiltonian_loss = jnp.inf
     num_batches = static_data['t_train_norm'].shape[0] // batch_size
     if num_batches == 0:
         num_batches = 1
@@ -3328,13 +3322,15 @@ def objective(trial, epochs_per_trial, static_data):
             static_data['H_train_norm'][perm]
         )
 
+        epoch_hamiltonian_loss = 0.0
         for i in range(num_batches):
             start, end = i * batch_size, (i + 1) * batch_size
             t_b, s_b, q_b, s_dot_b, H_b = (
                 t_shuffled[start:end], s_shuffled[start:end], q_shuffled[start:end],
                 s_dot_shuffled[start:end], H_shuffled[start:end]
             )
-            model, opt_state, _, _ = train_step(
+            # The train_step function returns the model, optimizer state, total loss, and a dictionary of loss components
+            model, opt_state, _, loss_components = train_step(
                 model, opt_state, optimizer, t_b, s_b, q_b, s_dot_b, H_b,
                 current_lambda_conservative, current_lambda_dissipative, current_lambda_physics,
                 static_data['hr_params'], static_data['t_mean'], static_data['t_std'],
@@ -3342,33 +3338,18 @@ def objective(trial, epochs_per_trial, static_data):
                 static_data['q_std'], static_data['s_dot_mean'], static_data['s_dot_std'],
                 static_data['H_mean'], static_data['H_std']
             )
+            # Accumulate the Hamiltonian loss from the training batch
+            epoch_hamiltonian_loss += loss_components['hamiltonian']
 
-        # --- Custom Evaluation for Hamiltonian Loss ---
-        all_states_pred_norm = jax.vmap(model.state_net)(static_data['t_val_norm'])
-        s_pred_norm = all_states_pred_norm[:, 10:]
-        H_pred_norm = jax.vmap(model.hamiltonian_net)(s_pred_norm)
-        H_true_norm = static_data['H_val_norm']
-        H_pred = denormalize(H_pred_norm, static_data['H_mean'], static_data['H_std'])
-        H_true = denormalize(H_true_norm, static_data['H_mean'], static_data['H_std'])
+        # Calculate the average training Hamiltonian loss for the epoch
+        avg_epoch_hamiltonian_loss = epoch_hamiltonian_loss / num_batches
 
-        def safe_corrcoef(x, y):
-            x_flat, y_flat = jnp.ravel(x), jnp.ravel(y)
-            finite_mask = jnp.isfinite(x_flat) & jnp.isfinite(y_flat)
-            x_finite, y_finite = x_flat[finite_mask], y_flat[finite_mask]
-            if x_finite.size < 2 or jnp.all(x_finite == x_finite[0]) or jnp.all(y_finite == y_finite[0]):
-                return 0.0
-            return jnp.corrcoef(x_finite, y_finite)[0, 1]
-
-        correlation = safe_corrcoef(H_true, H_pred)
-        sign = jnp.where(jnp.sign(correlation) == 0, 1.0, jnp.sign(correlation))
-        H_pred_aligned = sign * H_pred - jnp.mean(sign * H_pred) + jnp.mean(H_true)
-        current_hamiltonian_loss = jnp.mean((H_pred_aligned - H_true) ** 2)
-
-        if current_hamiltonian_loss < best_hamiltonian_loss:
-            best_hamiltonian_loss = current_hamiltonian_loss
+        # Update the best training Hamiltonian loss if the current one is better
+        if avg_epoch_hamiltonian_loss < best_training_hamiltonian_loss:
+            best_training_hamiltonian_loss = avg_epoch_hamiltonian_loss
 
     # --- 4. Return the Final Metric to Optuna ---
-    return best_hamiltonian_loss
+    return best_training_hamiltonian_loss
 
 
 # ==============================================================================
@@ -3426,46 +3407,52 @@ if __name__ == "__main__":
     # --- 2. Create and Run the Optuna Study ---
     print("\nStarting Optuna hyperparameter search...")
 
-    # ==================== MODIFIED CODE FOR CUSTOM SAVE DIRECTORY ==============
     # Define the storage directory and ensure it exists
     results_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'PINN Data')
     os.makedirs(results_dir, exist_ok=True)
 
     # Define the full path for the database file
-    db_name = os.path.basename(__file__).replace('.py', '.db') # e.g., 'optimize_hyperparams.db'
+    db_name = os.path.basename(__file__).replace('.py', '.db')
     db_path = os.path.join(results_dir, db_name)
 
-    # Create the storage name for Optuna, which is a URI
     storage_name = f"sqlite:///{db_path}"
-    study_name = "sphnn_pinn_optimization_study" # A unique name for the study
-    # ===========================================================================
+    study_name = "sphnn_pinn_optimization_study"
 
     objective_with_args = lambda trial: objective(trial, epochs_per_trial=500, static_data=static_data)
 
-    # ==================== MODIFIED LINE ========================================
-    # This now uses the storage and resuming capability.
     study = optuna.create_study(
         study_name=study_name,
         storage=storage_name,
         direction="minimize",
-        load_if_exists=True  # This is key for resuming the study
-    )
-    # ===========================================================================
+        load_if_exists=True
+        )
 
-    study.optimize(objective_with_args, n_trials=5)
+    study.optimize(objective_with_args, n_trials=30)
 
-    # --- 3. Print the Results ---
+    # --- 3. Print and Save the Results ---
     print("\nOptimization finished.")
     print(f"Study results are saved in: {storage_name}")
     print("Number of finished trials: ", len(study.trials))
+
+    best_trial = study.best_trial
+
     print("Best trial:")
-    best = study.best_trial
-    print(f"  Value (Best Hamiltonian Loss): {best.value:.6f}")
+    print(f"  Value (Best Validation Loss): {best_trial.value:.6f}")
     print("  Best Hyperparameters: ")
-    for key, value in best.params.items():
+    for key, value in best_trial.params.items():
         print(f"    {key}: {value}")
 
+    # Save the best hyperparameters to a text file
+    output_txt_path = os.path.join(results_dir, "best_hyperparams.txt")
+    with open(output_txt_path, 'w') as f:
+        f.write("Best Hyperparameter Optimization Results\n")
+        f.write("========================================\n\n")
+        f.write(f"Best Value (Validation Loss): {best_trial.value}\n\n")
+        f.write("Best Hyperparameters:\n")
+        for key, value in best_trial.params.items():
+            f.write(f"    {key}: {value}\n")
 
+    print(f"\n✅ Best hyperparameters saved to: {output_txt_path}")
 ```
 
 #### File: `pH_PINN.py`
@@ -3514,9 +3501,11 @@ jax.config.update("jax_enable_x64", True)
 class FourierFeatures(eqx.Module):
     """Encodes a 1D input into a higher-dimensional space using Fourier features."""
     b_matrix: jax.Array
-
+    output_size: int = eqx.field(static=True)
     def __init__(self, key, in_size=1, mapping_size=32, scale=1):
-        self.b_matrix = jax.random.normal(key, (mapping_size // 2, in_size)) * scale
+        n_pairs = mapping_size // 2
+        self.b_matrix = jax.random.normal(key, (n_pairs, in_size)) * scale
+        self.output_size = n_pairs * 2
 
     def __call__(self, t):
         if t.ndim == 1:
@@ -3529,11 +3518,16 @@ class StateNN(eqx.Module):
     """An MLP with Fourier Features to approximate the combined state [q(t), s(t)]."""
     layers: list
 
-    def __init__(self, key, out_size=15, width=256, depth=4, mapping_size=256, scale=173.58):
+    def __init__(self, key, out_size=15, width=780, depth=2, mapping_size=480, scale=682.6967557425353):
         fourier_key, *layer_keys = jax.random.split(key, depth + 1)
+
+        # Create the Fourier layer first to access its output_size
+        fourier_layer = FourierFeatures(fourier_key, in_size=1, mapping_size=mapping_size, scale=scale)
+
         self.layers = [
-            FourierFeatures(fourier_key, in_size=1, mapping_size=mapping_size, scale=scale),
-            eqx.nn.Linear(mapping_size, width, key=layer_keys[0]),
+            fourier_layer,
+            # Use the actual output size for the next layer's input
+            eqx.nn.Linear(fourier_layer.output_size, width, key=layer_keys[0]),
             *[eqx.nn.Linear(width, width, key=key) for i in range(1, depth - 1)],
             eqx.nn.Linear(width, out_size, key=layer_keys[-1])
         ]
@@ -3694,93 +3688,6 @@ class Combined_sPHNN_PINN(eqx.Module):
 # 2. DATA HANDLING
 # ==============================================================================
 
-
-# def generate_data(file_path="data_for_PIN.pkl"):
-#     """Loads and prepares training data from a pre-generated pickle file."""
-#     print(f"Loading simulation data from {file_path}...")
-#     try:
-#         with open(file_path, 'rb') as f:
-#             results = pickle.load(f)
-#     except FileNotFoundError:
-#         print(f"Error: Data file not found at {file_path}")
-#         print("Please ensure 'data_for_PIN.pkl' is in the same directory.")
-#         return None, None, None, None, None
-#
-#     t = jnp.asarray(results['t'])
-#     s = jnp.vstack([
-#         results['e_x'], results['e_y'], results['e_z'],
-#         results['e_u'], results['e_phi']
-#     ]).T
-#     q = jnp.vstack([
-#         results['x1'], results['y1'], results['z1'], results['u1'], results['phi1'],
-#         results['x2'], results['y2'], results['z2'], results['u2'], results['phi2']
-#     ]).T
-#     s_dot_true = jnp.vstack([
-#         results['d_e_x'], results['d_e_y'], results['d_e_z'],
-#         results['d_e_u'], results['d_e_phi']
-#     ]).T
-#     # Load the analytical Hamiltonian
-#     H_analytical = jnp.asarray(results['Hamiltonian'])
-#
-#     print("Data loading complete.")
-#     return t, s, q, s_dot_true, H_analytical
-
-#
-# def generate_data(file_path="error_system_data.pkl"):
-#     """
-#     Loads and prepares training data from a pre-generated pickle file containing
-#     multiple simulation runs.
-#     """
-#     print(f"Loading simulation data from {file_path}...")
-#     try:
-#         with open(file_path, 'rb') as f:
-#             # The file contains a list of result dictionaries
-#             all_runs_results = pickle.load(f)
-#     except FileNotFoundError:
-#         print(f"Error: Data file not found at {file_path}")
-#         print("Please run 'generate_data_for_PINN.py' to create the data file.")
-#         return None, None, None, None, None
-#
-#     # Initialize lists to hold data from all runs
-#     all_t, all_s, all_q, all_s_dot, all_H = [], [], [], [], []
-#
-#     # Process each simulation run
-#     for i, results in enumerate(all_runs_results):
-#         print(f"  ... processing run {i + 1}/{len(all_runs_results)}")
-#
-#         # Extract data for the current run
-#         t = jnp.asarray(results['t'])
-#         s = jnp.vstack([
-#             results['e_x'], results['e_y'], results['e_z'],
-#             results['e_u'], results['e_phi']
-#         ]).T
-#         q = jnp.vstack([
-#             results['x1'], results['y1'], results['z1'], results['u1'], results['phi1'],
-#             results['x2'], results['y2'], results['z2'], results['u2'], results['phi2']
-#         ]).T
-#         s_dot_true = jnp.vstack([
-#             results['d_e_x'], results['d_e_y'], results['d_e_z'],
-#             results['d_e_u'], results['d_e_phi']
-#         ]).T
-#         H_analytical = jnp.asarray(results['Hamiltonian'])
-#
-#         # Append to the main lists
-#         all_t.append(t)
-#         all_s.append(s)
-#         all_q.append(q)
-#         all_s_dot.append(s_dot_true)
-#         all_H.append(H_analytical)
-#
-#     # Concatenate all runs into single arrays
-#     final_t = jnp.concatenate(all_t)
-#     final_s = jnp.concatenate(all_s)
-#     final_q = jnp.concatenate(all_q)
-#     final_s_dot = jnp.concatenate(all_s_dot)
-#     final_H = jnp.concatenate(all_H)
-#
-#     print("Data loading and aggregation complete.")
-#     return final_t, final_s, final_q, final_s_dot, final_H
-
 def generate_data(file_path="error_system_data.pkl"):
     """
     Loads and prepares training data from a pre-generated pickle file containing
@@ -3789,18 +3696,21 @@ def generate_data(file_path="error_system_data.pkl"):
     print(f"Loading simulation data from {file_path}...")
     try:
         with open(file_path, 'rb') as f:
+            # The file contains a list of result dictionaries
             all_runs_results = pickle.load(f)
     except FileNotFoundError:
         print(f"Error: Data file not found at {file_path}")
         print("Please run 'generate_data_for_PINN.py' to create the data file.")
         return None, None, None, None, None
 
+    # Initialize lists to hold data from all runs
     all_t, all_s, all_q, all_s_dot, all_H = [], [], [], [], []
-    time_offset = 0.0  # Initialize the time offset
 
+    # Process each simulation run
     for i, results in enumerate(all_runs_results):
         print(f"  ... processing run {i + 1}/{len(all_runs_results)}")
 
+        # Extract data for the current run
         t = jnp.asarray(results['t'])
         s = jnp.vstack([
             results['e_x'], results['e_y'], results['e_z'],
@@ -3816,17 +3726,12 @@ def generate_data(file_path="error_system_data.pkl"):
         ]).T
         H_analytical = jnp.asarray(results['Hamiltonian'])
 
-        # Append data, adding the current offset to the time vector
-        all_t.append(t + time_offset)
+        # Append to the main lists
+        all_t.append(t)
         all_s.append(s)
         all_q.append(q)
         all_s_dot.append(s_dot_true)
         all_H.append(H_analytical)
-
-        # Update the offset for the next run to ensure continuity
-        if t.size > 0:
-            # Add the duration of the current run to the offset
-            time_offset += (t[-1] - t[0])
 
     # Concatenate all runs into single arrays
     final_t = jnp.concatenate(all_t)
@@ -3837,6 +3742,7 @@ def generate_data(file_path="error_system_data.pkl"):
 
     print("Data loading and aggregation complete.")
     return final_t, final_s, final_q, final_s_dot, final_H
+
 
 def normalize(data, mean, std):
     """Normalizes data using pre-computed statistics."""
@@ -4042,25 +3948,18 @@ def main():
     model_key, data_key = jax.random.split(key)
 
     # Training hyperparameters
-    # batch_size = 1000
-    # validation_split = 0.2
-    # initial_learning_rate = 1e-3
-    # end_learning_rate = 5e-5
-    # decay_steps = 3000
-    # epochs = 1000
-
-    batch_size = 2000
+    batch_size = 3189
     validation_split = 0.2
-    initial_learning_rate = 0.007745659946217974
+    initial_learning_rate = 0.00016121735227367525
     end_learning_rate = 5e-5
-    decay_steps = 538
-    epochs = 5000
+    decay_steps = 1266
+    epochs = 1500
 
     # Physics loss hyperparameters with warmup
-    lambda_conservative_max = 0.6168109547521601
-    lambda_dissipative_max = 0.8980172562119398
-    lambda_physics_max = 2.0105956760770627
-    lambda_warmup_epochs = 848
+    lambda_conservative_max = 0.11864951172561006
+    lambda_dissipative_max = 0.9370702690937136
+    lambda_physics_max = 3.0046429674909336
+    lambda_warmup_epochs = 1962
 
     # System parameters
     hr_params = DEFAULT_PARAMS.copy()
@@ -4108,9 +4007,9 @@ def main():
     q_dim = q_train.shape[1]
     nn_config = {
         "state_dim": s_dim,
-        "h_width": 128, "h_depth": 4, "h_epsilon": 1.20,
-        "d_width": 8, "d_depth": 3,
-        "j_width": 64, "j_depth": 3,
+        "h_width": 335, "h_depth": 6, "h_epsilon": 4.806086109769478,
+        "d_width": 8, "d_depth": 2,
+        "j_width": 53, "j_depth": 4,
         "activation": jax.nn.softplus,
     }
 
@@ -4356,6 +4255,57 @@ def main():
 
     plt.close('all')
     print(f"All plots saved to {output_dir}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+#### File: `read_best_hyperparams.py`
+```python
+import optuna
+import os
+
+
+def main():
+    """
+    Loads an Optuna study from a SQLite database file and prints the
+    details of the best trial.
+    """
+    # --- Define Study Details ---
+    # These must match the values used in your optimize_hyperparams.py script.
+
+    # MODIFICATION: Correctly navigate from src/sph_pinn up to the project root ('..', '..')
+    # and then down to the results directory.
+    results_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'results', 'PINN Data')
+
+    db_name = 'optimize_hyperparams.db'
+    db_path = os.path.join(results_dir, db_name)
+
+    storage_name = f"sqlite:///{db_path}"
+    study_name = "sphnn_pinn_optimization_study"
+
+    # --- Load the Study ---
+    print(f"Loading study '{study_name}' from {storage_name}...")
+    try:
+        study = optuna.load_study(study_name=study_name, storage=storage_name)
+    except Exception as e:
+        print(f"\nError loading study: {e}")
+        print(f"Please ensure the database file exists at: {db_path}")
+        return
+
+    # --- Get the Best Trial and Print Results ---
+    best = study.best_trial
+
+    print("\n" + "=" * 40)
+    print("         Best Trial Found")
+    print("=" * 40)
+    print(f"  Trial Number: {best.number}")
+    print(f"  Best Value (Loss): {best.value:.6f}")
+    print("\n  Best Hyperparameters:")
+    for key, value in best.params.items():
+        print(f"    '{key}': {value},")
+    print("=" * 40)
 
 
 if __name__ == "__main__":

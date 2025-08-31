@@ -59,7 +59,7 @@ class StateNN(eqx.Module):
     """An MLP with Fourier Features to approximate the combined state [q(t), s(t)]."""
     layers: list
 
-    def __init__(self, key, out_size=15, width=910, depth=4, mapping_size=258, scale=875.9442322078987):
+    def __init__(self, key, out_size=15, width=256, depth=3, mapping_size=32, scale=300):
         fourier_key, *layer_keys = jax.random.split(key, depth + 1)
 
         # Create the Fourier layer first to access its output_size
@@ -229,93 +229,6 @@ class Combined_sPHNN_PINN(eqx.Module):
 # 2. DATA HANDLING
 # ==============================================================================
 
-
-# def generate_data(file_path="data_for_PIN.pkl"):
-#     """Loads and prepares training data from a pre-generated pickle file."""
-#     print(f"Loading simulation data from {file_path}...")
-#     try:
-#         with open(file_path, 'rb') as f:
-#             results = pickle.load(f)
-#     except FileNotFoundError:
-#         print(f"Error: Data file not found at {file_path}")
-#         print("Please ensure 'data_for_PIN.pkl' is in the same directory.")
-#         return None, None, None, None, None
-#
-#     t = jnp.asarray(results['t'])
-#     s = jnp.vstack([
-#         results['e_x'], results['e_y'], results['e_z'],
-#         results['e_u'], results['e_phi']
-#     ]).T
-#     q = jnp.vstack([
-#         results['x1'], results['y1'], results['z1'], results['u1'], results['phi1'],
-#         results['x2'], results['y2'], results['z2'], results['u2'], results['phi2']
-#     ]).T
-#     s_dot_true = jnp.vstack([
-#         results['d_e_x'], results['d_e_y'], results['d_e_z'],
-#         results['d_e_u'], results['d_e_phi']
-#     ]).T
-#     # Load the analytical Hamiltonian
-#     H_analytical = jnp.asarray(results['Hamiltonian'])
-#
-#     print("Data loading complete.")
-#     return t, s, q, s_dot_true, H_analytical
-
-#
-# def generate_data(file_path="error_system_data.pkl"):
-#     """
-#     Loads and prepares training data from a pre-generated pickle file containing
-#     multiple simulation runs.
-#     """
-#     print(f"Loading simulation data from {file_path}...")
-#     try:
-#         with open(file_path, 'rb') as f:
-#             # The file contains a list of result dictionaries
-#             all_runs_results = pickle.load(f)
-#     except FileNotFoundError:
-#         print(f"Error: Data file not found at {file_path}")
-#         print("Please run 'generate_data_for_PINN.py' to create the data file.")
-#         return None, None, None, None, None
-#
-#     # Initialize lists to hold data from all runs
-#     all_t, all_s, all_q, all_s_dot, all_H = [], [], [], [], []
-#
-#     # Process each simulation run
-#     for i, results in enumerate(all_runs_results):
-#         print(f"  ... processing run {i + 1}/{len(all_runs_results)}")
-#
-#         # Extract data for the current run
-#         t = jnp.asarray(results['t'])
-#         s = jnp.vstack([
-#             results['e_x'], results['e_y'], results['e_z'],
-#             results['e_u'], results['e_phi']
-#         ]).T
-#         q = jnp.vstack([
-#             results['x1'], results['y1'], results['z1'], results['u1'], results['phi1'],
-#             results['x2'], results['y2'], results['z2'], results['u2'], results['phi2']
-#         ]).T
-#         s_dot_true = jnp.vstack([
-#             results['d_e_x'], results['d_e_y'], results['d_e_z'],
-#             results['d_e_u'], results['d_e_phi']
-#         ]).T
-#         H_analytical = jnp.asarray(results['Hamiltonian'])
-#
-#         # Append to the main lists
-#         all_t.append(t)
-#         all_s.append(s)
-#         all_q.append(q)
-#         all_s_dot.append(s_dot_true)
-#         all_H.append(H_analytical)
-#
-#     # Concatenate all runs into single arrays
-#     final_t = jnp.concatenate(all_t)
-#     final_s = jnp.concatenate(all_s)
-#     final_q = jnp.concatenate(all_q)
-#     final_s_dot = jnp.concatenate(all_s_dot)
-#     final_H = jnp.concatenate(all_H)
-#
-#     print("Data loading and aggregation complete.")
-#     return final_t, final_s, final_q, final_s_dot, final_H
-
 def generate_data(file_path="error_system_data.pkl"):
     """
     Loads and prepares training data from a pre-generated pickle file containing
@@ -324,18 +237,21 @@ def generate_data(file_path="error_system_data.pkl"):
     print(f"Loading simulation data from {file_path}...")
     try:
         with open(file_path, 'rb') as f:
+            # The file contains a list of result dictionaries
             all_runs_results = pickle.load(f)
     except FileNotFoundError:
         print(f"Error: Data file not found at {file_path}")
         print("Please run 'generate_data_for_PINN.py' to create the data file.")
         return None, None, None, None, None
 
+    # Initialize lists to hold data from all runs
     all_t, all_s, all_q, all_s_dot, all_H = [], [], [], [], []
-    time_offset = 0.0  # Initialize the time offset
 
+    # Process each simulation run
     for i, results in enumerate(all_runs_results):
         print(f"  ... processing run {i + 1}/{len(all_runs_results)}")
 
+        # Extract data for the current run
         t = jnp.asarray(results['t'])
         s = jnp.vstack([
             results['e_x'], results['e_y'], results['e_z'],
@@ -351,17 +267,12 @@ def generate_data(file_path="error_system_data.pkl"):
         ]).T
         H_analytical = jnp.asarray(results['Hamiltonian'])
 
-        # Append data, adding the current offset to the time vector
-        all_t.append(t + time_offset)
+        # Append to the main lists
+        all_t.append(t)
         all_s.append(s)
         all_q.append(q)
         all_s_dot.append(s_dot_true)
         all_H.append(H_analytical)
-
-        # Update the offset for the next run to ensure continuity
-        if t.size > 0:
-            # Add the duration of the current run to the offset
-            time_offset += (t[-1] - t[0])
 
     # Concatenate all runs into single arrays
     final_t = jnp.concatenate(all_t)
@@ -372,6 +283,7 @@ def generate_data(file_path="error_system_data.pkl"):
 
     print("Data loading and aggregation complete.")
     return final_t, final_s, final_q, final_s_dot, final_H
+
 
 def normalize(data, mean, std):
     """Normalizes data using pre-computed statistics."""
@@ -577,25 +489,18 @@ def main():
     model_key, data_key = jax.random.split(key)
 
     # Training hyperparameters
-    # batch_size = 1000
-    # validation_split = 0.2
-    # initial_learning_rate = 1e-3
-    # end_learning_rate = 5e-5
-    # decay_steps = 3000
-    # epochs = 1000
-
-    batch_size = 597
+    batch_size = 8000
     validation_split = 0.2
-    initial_learning_rate = 0.0009378672299911209
+    initial_learning_rate = 1e-3
     end_learning_rate = 5e-5
-    decay_steps = 1732
-    epochs = 2000
+    decay_steps = 3000
+    epochs = 5000
 
     # Physics loss hyperparameters with warmup
-    lambda_conservative_max = 0.43586256286303304
-    lambda_dissipative_max = 1.906049602319315
-    lambda_physics_max = 0.40551795249177786
-    lambda_warmup_epochs = 1624
+    lambda_conservative_max = 1
+    lambda_dissipative_max = 5
+    lambda_physics_max = 15
+    lambda_warmup_epochs = 2000
 
     # System parameters
     hr_params = DEFAULT_PARAMS.copy()
@@ -638,14 +543,15 @@ def main():
     s_dot_val_norm = normalize(s_dot_val, s_dot_mean, s_dot_std)
     H_val_norm = normalize(H_val, H_mean, H_std)
 
+
     # --- Centralized Neural Network Configuration ---
     s_dim = s_train.shape[1]
     q_dim = q_train.shape[1]
     nn_config = {
         "state_dim": s_dim,
-        "h_width": 449, "h_depth": 4, "h_epsilon": 2.793167243576169,
-        "d_width": 28, "d_depth": 5,
-        "j_width": 55, "j_depth": 6,
+        "h_width": 128, "h_depth": 3, "h_epsilon": 0.525,
+        "d_width": 2, "d_depth": 3,
+        "j_width": 2, "j_depth": 3,
         "activation": jax.nn.softplus,
     }
 

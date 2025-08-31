@@ -278,7 +278,7 @@ if __name__ == "__main__":
         load_if_exists=True
         )
 
-    study.optimize(objective_with_args, n_trials=200)
+    study.optimize(objective_with_args, n_trials=30)
 
     # --- 3. Print and Save the Results ---
     print("\nOptimization finished.")

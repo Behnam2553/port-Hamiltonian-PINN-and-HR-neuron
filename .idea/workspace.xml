@@ -4,12 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="329fa9e5-44a8-417a-9e59-78d39b36ad50" name="Changes" comment="plotting features">
-      <change afterPath="$PROJECT_DIR$/src/sph_pinn/optimize_hyperparams.py" afterDir="false" />
+    <list default="true" id="329fa9e5-44a8-417a-9e59-78d39b36ad50" name="Changes" comment="hyperparameter optimizer works nice">
+      <change afterPath="$PROJECT_DIR$/src/sph_pinn/read_best_hyperparams.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.name" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/laboratory/generate_data_for_PINN.py" beforeDir="false" afterPath="$PROJECT_DIR$/laboratory/generate_data_for_PINN.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/project_map.txt" beforeDir="false" afterPath="$PROJECT_DIR$/project_map.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/data_for_PIN.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/sph_pinn/optimize_hyperparams.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/sph_pinn/optimize_hyperparams.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/sph_pinn/pH_PINN.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/sph_pinn/pH_PINN.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -26,6 +27,11 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="init_cond_input" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
@@ -56,6 +62,7 @@
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "Python.Combined_State_Hamil_JRH.executor": "Run",
     "Python.bifurcation_analysis.executor": "Run",
+    "Python.convert_data_structure.executor": "Run",
     "Python.extract_project.executor": "Run",
     "Python.generate_data_for_PINN.executor": "Run",
     "Python.model.executor": "Run",
@@ -64,6 +71,7 @@
     "Python.physics.executor": "Run",
     "Python.plot_bif_lya.executor": "Run",
     "Python.plotting.executor": "Run",
+    "Python.read_best_hyperparams.executor": "Run",
     "Python.test_gpu.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
@@ -81,7 +89,7 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "settings.editor.selected.configurable": "settings.sync",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -110,7 +118,8 @@
       <workItem from="1756422731219" duration="5370000" />
       <workItem from="1756428179108" duration="200000" />
       <workItem from="1756462232228" duration="5051000" />
-      <workItem from="1756467367474" duration="52760000" />
+      <workItem from="1756467367474" duration="53820000" />
+      <workItem from="1756577458277" duration="14748000" />
     </task>
     <task id="LOCAL-00001" summary="initial commit">
       <option name="closed" value="true" />
@@ -192,7 +201,15 @@
       <option name="project" value="LOCAL" />
       <updated>1756472044283</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="hyperparameter optimizer works nice">
+      <option name="closed" value="true" />
+      <created>1756569637568</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1756569637568</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -216,19 +233,26 @@
     <MESSAGE value="pinn codes added" />
     <MESSAGE value="..." />
     <MESSAGE value="plotting features" />
-    <option name="LAST_COMMIT_MESSAGE" value="plotting features" />
+    <MESSAGE value="hyperparameter optimizer works nice" />
+    <option name="LAST_COMMIT_MESSAGE" value="hyperparameter optimizer works nice" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Thesis$model.coverage" NAME="model Coverage Results" MODIFIED="1756470473377" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/hr_model" />
     <SUITE FILE_PATH="coverage/Thesis$bifurcation_analysis.coverage" NAME="bifurcation_analysis Coverage Results" MODIFIED="1756471674580" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/laboratory" />
     <SUITE FILE_PATH="coverage/Thesis$physics.coverage" NAME="physics Coverage Results" MODIFIED="1756471090169" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/hr_model" />
-    <SUITE FILE_PATH="coverage/Thesis$Combined_State_Hamil_JRH.coverage" NAME="Combined_State_Hamil_JRH Coverage Results" MODIFIED="1756424302298" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/sph_pinn" />
-    <SUITE FILE_PATH="coverage/Thesis$plot_bif_lya.coverage" NAME="plot_bif_lya Coverage Results" MODIFIED="1756333113255" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/visualization/literature plots" />
     <SUITE FILE_PATH="coverage/Thesis$generate_data_for_PINN.coverage" NAME="generate_data_for_PINN Coverage Results" MODIFIED="1756561247210" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/laboratory" />
     <SUITE FILE_PATH="coverage/Thesis$test_gpu.coverage" NAME="test_gpu Coverage Results" MODIFIED="1756462453304" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/sph_pinn" />
+    <SUITE FILE_PATH="coverage/generate_data_for_PINN_py$optimize_hyperparams.coverage" NAME="optimize_hyperparams Coverage Results" MODIFIED="1756593109555" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/sph_pinn" />
+    <SUITE FILE_PATH="coverage/generate_data_for_PINN_py$extract_project.coverage" NAME="extract_project Coverage Results" MODIFIED="1756600471042" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/utils" />
+    <SUITE FILE_PATH="coverage/generate_data_for_PINN_py$read_best_hyperparams.coverage" NAME="read_best_hyperparams Coverage Results" MODIFIED="1756599858537" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/sph_pinn" />
+    <SUITE FILE_PATH="coverage/generate_data_for_PINN_py$pH_PINN.coverage" NAME="pH_PINN Coverage Results" MODIFIED="1756600730716" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/sph_pinn" />
+    <SUITE FILE_PATH="coverage/Thesis$model.coverage" NAME="model Coverage Results" MODIFIED="1756470473377" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/hr_model" />
+    <SUITE FILE_PATH="coverage/Thesis$Combined_State_Hamil_JRH.coverage" NAME="Combined_State_Hamil_JRH Coverage Results" MODIFIED="1756424302298" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/sph_pinn" />
+    <SUITE FILE_PATH="coverage/Thesis$plot_bif_lya.coverage" NAME="plot_bif_lya Coverage Results" MODIFIED="1756333113255" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/visualization/literature plots" />
+    <SUITE FILE_PATH="coverage/generate_data_for_PINN_py$generate_data_for_PINN.coverage" NAME="generate_data_for_PINN Coverage Results" MODIFIED="1756580271542" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/laboratory" />
     <SUITE FILE_PATH="coverage/Thesis$extract_project.coverage" NAME="extract_project Coverage Results" MODIFIED="1756513169844" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/utils" />
     <SUITE FILE_PATH="coverage/Thesis$optimize_hyperparams.coverage" NAME="optimize_hyperparams Coverage Results" MODIFIED="1756561634788" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/sph_pinn" />
     <SUITE FILE_PATH="coverage/Thesis$pH_PINN.coverage" NAME="pH_PINN Coverage Results" MODIFIED="1756560629920" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/sph_pinn" />
     <SUITE FILE_PATH="coverage/Thesis$plotting.coverage" NAME="plotting Coverage Results" MODIFIED="1756420073092" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/visualization" />
+    <SUITE FILE_PATH="coverage/generate_data_for_PINN_py$convert_data_structure.coverage" NAME="convert_data_structure Coverage Results" MODIFIED="1756590996755" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/results/PINN Data" />
   </component>
 </project>

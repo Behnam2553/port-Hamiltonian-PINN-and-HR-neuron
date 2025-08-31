@@ -128,7 +128,7 @@ if __name__ == '__main__':
     from visualization.plotting import plot_pinn_data
 
     sim_params = DEFAULT_PARAMS.copy()
-    sim_params['ge'] = 0.65
+    sim_params['ge'] = 0.62
 
     import os
     output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results', 'PINN Data/')
@@ -136,13 +136,13 @@ if __name__ == '__main__':
 
     output_file = os.path.join(output_dir, f'error_system_data.pkl')
     # Generate data for 5 runs
-    generate_data(num_runs=5,
+    generate_data(num_runs=1,
                   dynamics = 'complete',
                   param_dict = sim_params,
                   initial_state_range = (-1, 1),
-                  end_time = 500,
-                  n_points = 2000,
-                  seed=32,
+                  end_time = 1000,
+                  n_points = 10000,
+                  seed=55,
                   output_file=output_file
                   )
 
