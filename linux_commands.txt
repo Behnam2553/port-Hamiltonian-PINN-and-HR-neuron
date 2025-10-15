@@ -1,0 +1,11 @@
+Activate vir Env:
+
+module load python/3.12-conda
+conda activate ~/.conda/envs/Thesis
+
+=======================================================================================================================
+Start GPU
+
+start-gpu -p a100 -g gpu:a100:1 -t 02:00:00
+start-gpu -p rtx3080 -g gpu:rtx3080:1 -t 02:00:00
+start-gpu -p work -g gpu:rtx2080ti:1 -t 02:00:00

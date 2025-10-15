@@ -1,0 +1,8 @@
+numpy
+jax
+diffrax
+equinox
+optax
+matplotlib
+pandas
+PyQt5
