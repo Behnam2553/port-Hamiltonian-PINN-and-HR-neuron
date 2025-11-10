@@ -1,4 +1,3 @@
-
 # An asymptotic stability proof and a port-Hamiltonian PINN for chaotic synchronization in Hindmarsh–Rose neurons
 
 **Codebase for the paper**  
@@ -41,6 +40,7 @@ We study chaotic synchronization in a five-dimensional Hindmarsh-Rose neuron mod
 │   └── run_loop.py
 ├── visualization/
 │   └── plotting.py
+├── Fortran Codes/                 # Lyapunov calculations for the 1D and 2D maps
 ├── results/
 ├── requirements.txt
 └── README.md
@@ -110,9 +110,12 @@ Analysis / experiment scripts around the model:
 
 If you use this repository, please cite:
 
-bibtex
+```bibtex
 @article{BabaeianYamakou2025HRpHPINN,
   title   = {An asymptotic stability proof and a port-Hamiltonian physics-informed neural network approach to chaotic synchronization in Hindmarsh-Rose neurons},
   author  = {Babaeian, Behnam and Yamakou, Marius E.},
   year    = {2025}
 }
+```
+
+Preprint: https://arxiv.org/abs/2511.04809
