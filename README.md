@@ -1,13 +1,13 @@
-# An asymptotic stability proof and a port-Hamiltonian PINN for chaotic synchronization in Hindmarsh–Rose neurons
+# An asymptotic stability proof and a port-Hamiltonian PINN for chaotic synchronization
 
 **Codebase for the paper**  
-**“An asymptotic stability proof and a port-Hamiltonian physics-informed neural network approach to chaotic synchronization in Hindmarsh–Rose neurons.”**
+**“An asymptotic stability proof and a port-Hamiltonian physics-informed neural network approach to chaotic synchronization.”**
 
 ---
 
 ## Abstract
 
-We study chaotic synchronization in a five-dimensional Hindmarsh-Rose neuron model augmented with electromagnetic induction and a switchable memristive autapse. For two diffusively coupled neurons, we derive the linearized error dynamics and prove global asymptotic stability of the synchronization manifold via a quadratic Lyapunov function. Verifiable sufficient conditions follow from Sylvester’s criterion on the leading principal minors, and convergence is established using Barbalat’s lemma. Leveraging Helmholtz's decomposition, we separate the error field into conservative and dissipative parts and obtain a closed-form expression for the synchronization energy, along with its dissipation law, providing a quantitative measure of the energetic cost of synchrony. Numerical simulations confirm complete synchronization, overall decay of the synchronization energy, and close agreement between Lyapunov and Hamiltonian diagnostics across parameter sweeps. Building on these results, we introduce a port-Hamiltonian physics-informed neural network that embeds the conservative/dissipative structure in training through physically motivated losses and structural priors. The learned Hamiltonian and energy–rate match analytical benchmarks.  The framework narrows the gap between dynamical systems theory and data-driven discovery by providing a template for energy-aware modeling and control of nonlinear neuronal synchronization.
+We study chaotic synchronization in a five-dimensional Hindmarsh–Rose neuron model augmented with electromagnetic induction and a switchable memristive autapse. For two diffusively coupled neurons, we derive the linearized error dynamics and prove global asymptotic stability of the synchronization manifold using a quadratic Lyapunov function. Verifiable sufficient conditions follow from Sylvester’s criterion, and convergence is established using Barbalat’s lemma. A Helmholtz decomposition splits the error field into conservative and dissipative parts, yielding a closed-form synchronization energy and its dissipation law, which quantify the energetic cost of synchrony. Numerical simulations confirm complete synchronization, monotone decay of the synchronization energy, and close agreement between Lyapunov and Hamiltonian diagnostics across parameter sweeps. Building on these results, we introduce a port-Hamiltonian physics-informed neural network that embeds the conservative/dissipative structure through tailored losses and structural priors. The learned Hamiltonian and energy-rate match analytical benchmarks, providing an energy-aware, data-driven template for modeling and control of nonlinear neuronal synchronization.
 
 ---
 
