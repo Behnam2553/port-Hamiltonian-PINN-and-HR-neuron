@@ -1,4 +1,4 @@
-# An asymptotic stability proof and a port-Hamiltonian PINN for chaotic synchronization
+# An asymptotic stability proof and a port-Hamiltonian physics-informed neural network approach to chaotic synchronization
 
 **Codebase for the paper**  
 **“An asymptotic stability proof and a port-Hamiltonian physics-informed neural network approach to chaotic synchronization.”**
