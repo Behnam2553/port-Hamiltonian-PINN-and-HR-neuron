@@ -118,7 +118,7 @@ If you use this repository, please cite:
 
 ```bibtex
 @article{BabaeianYamakou2025HRpHPINN,
-  title   = {An asymptotic stability proof and a port-Hamiltonian physics-informed neural network approach to chaotic synchronization in Hindmarsh-Rose neurons},
+  title   = {A Lyapunov stability proof and a port-Hamiltonian physics-informed neural network for chaotic synchronization in memristive neurons},
   author  = {Babaeian, Behnam and Yamakou, Marius E.},
   year    = {2025}
 }
