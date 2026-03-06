@@ -1,13 +1,13 @@
-# An asymptotic stability proof and a port-Hamiltonian physics-informed neural network approach to chaotic synchronization
+# A Lyapunov stability proof and a port-Hamiltonian physics-informed neural network for chaotic synchronization in memristive neurons
 
 **Codebase for the paper**  
-**“An asymptotic stability proof and a port-Hamiltonian physics-informed neural network approach to chaotic synchronization.”**
+**“A Lyapunov stability proof and a port-Hamiltonian physics-informed neural network for chaotic synchronization in memristive neurons.”**
 
 ---
 
 ## Abstract
 
-We study chaotic synchronization in a five-dimensional Hindmarsh–Rose neuron model augmented with electromagnetic induction and a switchable memristive autapse. For two diffusively coupled neurons, we derive the linearized error dynamics and prove global asymptotic stability of the synchronization manifold using a quadratic Lyapunov function. Verifiable sufficient conditions follow from Sylvester’s criterion, and convergence is established using Barbalat’s lemma. A Helmholtz decomposition splits the error field into conservative and dissipative parts, yielding a closed-form synchronization energy and its dissipation law, which quantify the energetic cost of synchrony. Numerical simulations confirm complete synchronization, monotone decay of the synchronization energy, and close agreement between Lyapunov and Hamiltonian diagnostics across parameter sweeps. Building on these results, we introduce a port-Hamiltonian physics-informed neural network that embeds the conservative/dissipative structure through tailored losses and structural priors. The learned Hamiltonian and energy-rate match analytical benchmarks, providing an energy-aware, data-driven template for modeling and control of nonlinear neuronal synchronization.
+We study chaotic synchronization in a 5D Hindmarsh--Rose neuron model augmented with electromagnetic induction and a switchable memristive autapse. For two diffusively coupled identical neurons, we derive the transverse error dynamical system and analyze local synchronization via the linearized error system around the synchronization manifold. A quadratic Lyapunov function yields explicit sufficient conditions for (i) asymptotic stability when the memristive switching remains dissipative and (ii) practical stability with an explicit ultimate bound under non-dissipative switching. We complement this with a Hamiltonian-based viewpoint: a Helmholtz decomposition of the linearized error vector field provides a closed-form synchronization Hamiltonian and its rate identity. Numerical simulations corroborate convergence or ultimate boundedness of the synchronization errors and an overall decay of the synchronization Hamiltonian and its instantaneous rate toward zero after transients, and show consistent trends between Lyapunov- and Hamiltonian-based diagnostics across parameters. Finally, we propose the first port-Hamiltonian physics-informed neural network (pH-PINN) that learns this synchronization Hamiltonian and its rate from data while preserving conservative/dissipative structure, achieving close agreement with the analytical expressions.
 
 ---
 
