@@ -16,6 +16,7 @@ We study chaotic synchronization in a 5D Hindmarsh--Rose neuron model augmented 
 - [Quick start](#quick-start)
 - [Key directories](#key-directories)
 - [Typical pH-PINN workflow](#typical-ph-pinn-workflow)
+- [The Diagram](#the-diagram)
 - [Citing](#citing)
 
 ---
