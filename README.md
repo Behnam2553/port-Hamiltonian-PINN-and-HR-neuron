@@ -105,6 +105,11 @@ Analysis / experiment scripts around the model:
 3. **Inspect** the learned Hamiltonian and energy-rate and compare with the analytical ones (the saved data contain them).
 
 ---
+## The Diagram
+
+<img width="8192" height="7406" alt="diagram" src="https://github.com/user-attachments/assets/1ee9f54a-84b7-460c-8542-608c6cadbc05" />
+
+---
 
 ## Citing
 
