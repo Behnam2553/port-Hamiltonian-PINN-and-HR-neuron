@@ -16,7 +16,7 @@ We study chaotic synchronization in a 5D Hindmarsh--Rose neuron model augmented 
 - [Quick start](#quick-start)
 - [Key directories](#key-directories)
 - [Typical pH-PINN workflow](#typical-ph-pinn-workflow)
-- [The Diagram](#the-diagram)
+- [pH-PINN Diagram](#pH-PINN-diagram)
 - [Citing](#citing)
 
 ---
@@ -107,7 +107,7 @@ Analysis / experiment scripts around the model:
 3. **Inspect** the learned Hamiltonian and energy-rate and compare with the analytical ones (the saved data contain them).
 
 ---
-## The Diagram
+## pH-PINN Diagram
 
 <img width="5890" height="5460" alt="Figure_9" src="https://github.com/user-attachments/assets/0484fdc0-ca76-4f67-8ac6-bc2373399c0a" />
 
