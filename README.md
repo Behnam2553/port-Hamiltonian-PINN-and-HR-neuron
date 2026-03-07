@@ -109,7 +109,8 @@ Analysis / experiment scripts around the model:
 ---
 ## The Diagram
 
-<img width="8192" height="7406" alt="diagram" src="https://github.com/user-attachments/assets/1ee9f54a-84b7-460c-8542-608c6cadbc05" />
+<img width="5890" height="5460" alt="Figure_9" src="https://github.com/user-attachments/assets/0484fdc0-ca76-4f67-8ac6-bc2373399c0a" />
+
 
 ---
 
