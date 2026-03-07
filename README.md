@@ -43,7 +43,7 @@ We study chaotic synchronization in a 5D Hindmarsh--Rose neuron model augmented 
 │   └── plotting.py
 ├── Fortran Codes/                 # Lyapunov calculations for the 1D and 2D maps
 ├── results/
-├── diagram.png
+├── pH-PINN diagram.png
 ├── requirements.txt
 └── README.md
 ```
