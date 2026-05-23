@@ -125,5 +125,4 @@ If you use this repository, please cite:
   year    = {2025}
 }
 ```
-
-Preprint: https://arxiv.org/abs/2511.04809
+paper: https://doi.org/10.1016/j.amc.2026.130157
