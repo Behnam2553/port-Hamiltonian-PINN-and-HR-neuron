@@ -119,10 +119,11 @@ Analysis / experiment scripts around the model:
 If you use this repository, please cite:
 
 ```bibtex
-@article{BabaeianYamakou2025HRpHPINN,
-  title   = {A Lyapunov stability proof and a port-Hamiltonian physics-informed neural network for chaotic synchronization in memristive neurons},
-  author  = {Babaeian, Behnam and Yamakou, Marius E.},
-  year    = {2025}
-}
+\bibitem{BabaeianYamakou2026}
+B.~Babaeian and M.~E. Yamakou,
+``A Lyapunov stability proof and a port-Hamiltonian physics-informed neural network for chaotic synchronization in memristive neurons,''
+\emph{Applied Mathematics and Computation},
+vol.~530, Article~130157, 2026.
+doi: \href{https://doi.org/10.1016/j.amc.2026.130157}{10.1016/j.amc.2026.130157}.
 ```
 paper: https://doi.org/10.1016/j.amc.2026.130157
